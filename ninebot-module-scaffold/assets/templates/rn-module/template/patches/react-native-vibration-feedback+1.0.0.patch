@@ -1,0 +1,28 @@
+diff --git a/node_modules/react-native-vibration-feedback/.DS_Store b/node_modules/react-native-vibration-feedback/.DS_Store
+new file mode 100644
+index 0000000..36d39ae
+Binary files /dev/null and b/node_modules/react-native-vibration-feedback/.DS_Store differ
+diff --git a/node_modules/react-native-vibration-feedback/ios/.DS_Store b/node_modules/react-native-vibration-feedback/ios/.DS_Store
+new file mode 100644
+index 0000000..00f8ff2
+Binary files /dev/null and b/node_modules/react-native-vibration-feedback/ios/.DS_Store differ
+diff --git a/node_modules/react-native-vibration-feedback/ios/RNVibrationFeedback.podspec b/node_modules/react-native-vibration-feedback/ios/RNVibrationFeedback.podspec
+index b046954..e628176 100644
+--- a/node_modules/react-native-vibration-feedback/ios/RNVibrationFeedback.podspec
++++ b/node_modules/react-native-vibration-feedback/ios/RNVibrationFeedback.podspec
+@@ -6,13 +6,13 @@ Pod::Spec.new do |s|
+   s.description  = <<-DESC
+                   RNVibrationFeedback
+                    DESC
+-  s.homepage     = ""
++  s.homepage     = "https://git.ninebot.com"
+   s.license      = "MIT"
+   # s.license      = { :type => "MIT", :file => "FILE_LICENSE" }
+   s.author             = { "author" => "author@domain.cn" }
+   s.platform     = :ios, "7.0"
+   s.source       = { :git => "https://github.com/author/RNVibrationFeedback.git", :tag => "master" }
+-  s.source_files  = "RNVibrationFeedback/**/*.{h,m}"
++  s.source_files  = "*.{h,m}"
+   s.requires_arc = true
+ 
+ 

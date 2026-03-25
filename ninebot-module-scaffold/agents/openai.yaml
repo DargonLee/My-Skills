@@ -1,0 +1,3 @@
+interface:
+  display_name: "Ninebot Module Scaffold"
+  short_description: "Generate iOS/RN/Android/Harmony module scaffolds"

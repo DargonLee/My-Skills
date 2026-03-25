@@ -1,0 +1,33 @@
+diff --git a/node_modules/@bugsnag/react-native/BugsnagReactNative.podspec b/node_modules/@bugsnag/react-native/BugsnagReactNative.podspec
+index 011c006..4eb6ed6 100644
+--- a/node_modules/@bugsnag/react-native/BugsnagReactNative.podspec
++++ b/node_modules/@bugsnag/react-native/BugsnagReactNative.podspec
+@@ -13,18 +13,20 @@ Pod::Spec.new do |s|
+   s.author       = { "Bugsnag" => "platforms@bugsnag.com" }
+   s.platform     = :ios, "9.0"
+   s.source       = { :git => "https://github.com/bugsnag/bugsnag-js.git", :tag => "v#{s.version}" }
+-  s.source_files = "ios/BugsnagReactNative/**/*.{h,mm,m}",
+-                   "ios/vendor/bugsnag-cocoa/**/*.{h,mm,m,cpp,c}",
+-  s.public_header_files = "ios/vendor/bugsnag-cocoa/{#{bugsnag_cocoa_public_header_files.join(',')}}"
+-  s.header_dir = "Bugsnag"
++  # s.source_files = "ios/BugsnagReactNative/**/*.{h,mm,m}",
++  #                  "ios/vendor/bugsnag-cocoa/**/*.{h,mm,m,cpp,c}",
++  # s.public_header_files = "ios/vendor/bugsnag-cocoa/{#{bugsnag_cocoa_public_header_files.join(',')}}"
++  # s.header_dir = "Bugsnag"
++  s.source_files = "ios/BugsnagReactNative/**/*.{h,m,mm}"
+   s.requires_arc = true
+   s.resource_bundles = {
+-    "Bugsnag" => ["ios/vendor/bugsnag-cocoa/Bugsnag/resources/PrivacyInfo.xcprivacy"],
++    "BugsnagReactNative" => ["ios/vendor/bugsnag-cocoa/Bugsnag/resources/PrivacyInfo.xcprivacy"],
+   }
+ 
+   if ENV["RCT_NEW_ARCH_ENABLED"] == "1"
+     install_modules_dependencies(s)
+   else
+     s.dependency "React-Core"
++    s.dependency "Bugsnag"
+   end
+ end
+diff --git a/node_modules/@bugsnag/react-native/ios/.DS_Store b/node_modules/@bugsnag/react-native/ios/.DS_Store
+new file mode 100644
+index 0000000..e69de29

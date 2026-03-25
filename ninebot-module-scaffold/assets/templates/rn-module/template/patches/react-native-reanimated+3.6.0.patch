@@ -1,0 +1,31 @@
+diff --git a/node_modules/react-native-reanimated/Common/cpp/Registries/EventHandlerRegistry.cpp b/node_modules/react-native-reanimated/Common/cpp/Registries/EventHandlerRegistry.cpp
+index 1efe243..63615fe 100644
+--- a/node_modules/react-native-reanimated/Common/cpp/Registries/EventHandlerRegistry.cpp
++++ b/node_modules/react-native-reanimated/Common/cpp/Registries/EventHandlerRegistry.cpp
+@@ -74,6 +74,10 @@ void EventHandlerRegistry::processEvent(
+   }
+ 
+   jsi::Runtime &rt = uiWorkletRuntime->getJSIRuntime();
++  //iOS 远程包, 在加载bottom-sheet的BottomSheetFlatList时, 会有一个空的事件payload, eventName为"onLayout",需要屏蔽,不然会crash
++  if (!eventPayload.isObject()) {
++    return;
++  }
+   eventPayload.asObject(rt).setProperty(
+       rt, "eventName", jsi::String::createFromUtf8(rt, eventName));
+   for (auto handler : handlersForEvent) {
+diff --git a/node_modules/react-native-reanimated/apple/REAModule.mm b/node_modules/react-native-reanimated/apple/REAModule.mm
+index dc8d651..d74c759 100644
+--- a/node_modules/react-native-reanimated/apple/REAModule.mm
++++ b/node_modules/react-native-reanimated/apple/REAModule.mm
+@@ -125,6 +125,11 @@ - (void)installReanimatedAfterReload
+ 
+ - (void)handleJavaScriptDidLoadNotification:(NSNotification *)notification
+ {
++  //这里做个异常防错,当有多个bridge时,热重载后,第一个bridge重载完成,而第二个bridge还未重载完成
++  //此时会触发这个通知,导致第二个bridge的surfacePresenter为nil
++  if (_surfacePresenter == nil) {
++        return;
++  }
+   _surfacePresenter = self.bridge.surfacePresenter;
+   RCTScheduler *scheduler = [_surfacePresenter scheduler];
+   __weak __typeof__(self) weakSelf = self;

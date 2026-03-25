@@ -1,0 +1,14 @@
+node_modules
+.DS_Store
+
+# Yarn Berry (no zero-install, node-modules linker)
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/patches
+!.yarn/versions
+!.yarn/sdks
+
+# 构建产物
+dist/
+build/

@@ -1,0 +1,18 @@
+{
+  "id": "ios-pod",
+  "platform": "ios",
+  "kind": "pod-module",
+  "display_name": "iOS Pod Module",
+  "description": "Ninebot iOS CocoaPods module scaffold based on NBModuleTemplate.",
+  "source_dir": "template",
+  "target_dir_template": "{{module_name}}",
+  "rename_tokens": {
+    "NBModuleTemplate": "{{module_name}}"
+  },
+  "content_tokens": {
+    "NBModuleTemplate": "{{module_name}}"
+  },
+  "ignore_names": [
+    ".DS_Store"
+  ]
+}
