@@ -75,31 +75,6 @@
         "kind": "manual",
         "label": ""
       }
-    },
-    {
-      "id": "c69a91fc-28aa-4a86-8c3c-6263a5d95d77",
-      "slug": "my-skill",
-      "title": "my-skill",
-      "description": null,
-      "kind": "skill",
-      "scope": "global",
-      "origin": "private",
-      "sourceStatus": "local-only",
-      "projectId": null,
-      "tags": [],
-      "content": "---\nname: my-skill\ndescription:\n---\n\n# my-skill\n\n描述这个 Skill 的用途。\n\n## 用法\n\n`/my-skill action` — 描述操作",
-      "revision": "574172c452db6523020d44c6ff1221c7db89c9009a42e74199cf9917a384a5a5",
-      "sourceUrl": null,
-      "sourceRef": null,
-      "sourcePath": null,
-      "upstreamRevision": null,
-      "forkedFrom": null,
-      "createdAt": 1776578981155,
-      "updatedAt": 1776578981155,
-      "provenance": {
-        "kind": "manual",
-        "label": ""
-      }
     }
   ],
   "projectProfiles": []
