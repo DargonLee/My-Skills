@@ -24,6 +24,33 @@
       "createdAt": 1776577157390,
       "updatedAt": 1776577157390,
       "provenance": {
+        "kind": "file-import",
+        "label": "导入"
+      }
+    },
+    {
+      "id": "916501bd-a97d-4a5c-8175-6ed4895630d3",
+      "slug": "harlan-git-commit",
+      "title": "Harlan Git Commit 规范",
+      "description": null,
+      "kind": "skill",
+      "scope": "global",
+      "origin": "private",
+      "sourceStatus": "local-only",
+      "projectId": null,
+      "tags": [
+        "imported"
+      ],
+      "content": "---\nname: harlan-git-commit\ndescription: Harlan的Git提交规范 - 压缩标题+详细描述，只提交不推送\nversion: 1.0.0\n---\n\n# Harlan Git Commit 规范\n\n## 核心原则\n\n1. **只提交，不推送** - 执行 `git commit`，永远不执行 `git push`\n2. **标题压缩内容** - 用简洁的中文标题总结改了什么，突出核心变更\n3. **描述详细展开** - 在 Description 中详细说明变更文件、原因、影响\n\n## Commit 格式\n\n```\n<类型>: <压缩的标题>\n\n<详细描述（变更文件、原因、影响）>\n```\n\n## 类型前缀\n\n| 类型 | 使用场景 |\n|------|----------|\n| feat | 新功能 |\n| fix | Bug修复 |\n| refactor | 重构（不改变功能） |\n| docs | 文档更新 |\n| chore | 维护任务 |\n| perf | 性能优化 |\n| style | 代码风格（格式化等） |\n\n## 标题命名规则\n\n- 使用中文撰写\n- 简洁明了，不超过50字\n- 突出核心变更，避免模糊描述\n- 示例：\n  - `fix: 修复打包崩溃问题`\n  - `feat: 添加技能创建功能`\n  - `docs: 更新README安装说明`\n\n## Description 模板\n\n```\n变更的文件:\n- file1.ts\n- file2.rs\n\n变更内容:\n- 具体描述1\n- 具体描述2\n\n影响范围:\n- 影响的模块或功能\n```\n\n## 执行步骤\n\n1. `git status` - 查看未提交的变更\n2. `git diff --stat` - 确认变更统计\n3. `git diff` - 查看具体变更内容\n4. 分析变更内容，提取关键信息\n5. 生成压缩标题（≤50字，中文）\n6. 生成详细描述（变更文件+内容+影响）\n7. `git add <files>` - 添加要提交的文件\n8. `git commit -m \"<标题>\" -m \"<详细描述>\"` - 执行提交（**不加 --no-verify**）\n\n## 示例\n\n### 场景1：修复Bug\n\n**变更：**\n- 修改了 `src-tauri/tauri.conf.json` 修复打包崩溃\n- 更新了 `README.md` 添加macOS签名说明\n\n**标题：**\n```\nfix: 修复macOS打包崩溃问题\n```\n\n**描述：**\n```\n变更的文件:\n- src-tauri/tauri.conf.json\n- README.md\n\n变更内容:\n- 移除tauri.conf.json中的升级key配置\n- 添加macOS无法验证开发者的解决说明（xattr命令）\n\n影响范围:\n- 修复打包构建流程\n- 改善macOS用户体验\n```\n\n---\n\n### 场景2：更新文档\n\n**变更：**\n- 修正CLAUDE.md中ToastProvider的位置说明\n\n**标题：**\n```\ndocs: 修正CLAUDE.md中State Management描述\n```\n\n**描述：**\n```\n变更的文件:\n- CLAUDE.md\n\n变更内容:\n- 指出ToastProvider实际位于 src/components/ui/Toast.tsx\n- 原描述误认为在 src/context/\n\n影响范围:\n- 仅影响文档准确性，不影响代码功能\n```\n\n---\n\n### 场景3：新功能\n\n**变更：**\n- 添加了新的skills管理功能\n- 修改了Rust后端添加新的command\n- 添加了对应的TypeScript类型\n\n**标题：**\n```\nfeat: 添加skills备份与恢复功能\n```\n\n**描述：**\n```\n变更的文件:\n- src-tauri/src/commands.rs\n- src-tauri/src/domain.rs\n- src/services/backupSource.ts\n- src/types/index.ts\n\n变更内容:\n- 新增 backup_source 命令用于备份skills\n- 新增 restore_source 命令用于恢复skills\n- 添加 BackupSource 和 RestoreSource 类型定义\n- 前端添加 backupSource.ts 服务层封装\n\n影响范围:\n- 新增备份恢复UI入口\n- 用户可手动创建快照并回滚\n```\n",
+      "revision": "943056ebda6a140ae0d4022a06ce15cbadb14e8f9b4e7bb26193772282bc64c1",
+      "sourceUrl": null,
+      "sourceRef": null,
+      "sourcePath": null,
+      "upstreamRevision": null,
+      "forkedFrom": null,
+      "createdAt": 1776577172832,
+      "updatedAt": 1776577172832,
+      "provenance": {
         "kind": "manual",
         "label": ""
       }
