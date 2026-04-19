@@ -1,5 +1,33 @@
 {
   "version": "2",
-  "resources": [],
+  "resources": [
+    {
+      "id": "2b5c2148-d86a-44f3-8679-a75f3e0288e5",
+      "slug": "resource-1776577157390",
+      "title": "执行流程",
+      "description": "1. **检查仓库状态** - 确认当前目录是 Git 仓库 - 获取当前分支名",
+      "kind": "skill",
+      "scope": "global",
+      "origin": "private",
+      "sourceStatus": "local-only",
+      "projectId": null,
+      "tags": [
+        "imported"
+      ],
+      "content": "---\nname: git-commit\ndescription: 智能分析工作区变更，生成简洁的提交信息并执行提交。自动暂存所有变更，分析文件类型和变更性质，生成符合 Conventional Commits 规范的提交信息。\ndisable-model-invocation: true\nallowed-tools: Bash(git *), Read, Write\nargument-hint: \"[可选：自定义提交信息]\"\n---\n\n智能提交工作区所有变更。\n\n## 执行流程\n\n1. **检查仓库状态**\n   - 确认当前目录是 Git 仓库\n   - 获取当前分支名\n\n2. **暂存变更**\n   - 执行 `git add -A` 暂存所有变更（包括新增、修改、删除）\n\n3. **分析变更**\n   - 获取变更统计：`git diff --cached --stat`\n   - 分析文件类型和变更性质：\n     - 新增文件 → `feat`\n     - 主要删除 → `remove` 或 `clean`\n     - 配置变更 → `config`\n     - 测试文件 → `test`\n     - 文档变更 → `docs`\n     - 重构/重命名 → `refactor`\n     - 其他修改 → `fix`\n\n4. **生成提交信息**\n   - 格式：`type(scope): 简洁描述, +insertions/-deletions`\n   - 限制：不超过 50 个字符\n   - 示例：`feat(api): add auth middleware, +45/-3`\n\n5. **执行提交**\n   - 如果提供了自定义参数 `$ARGUMENTS`，使用用户输入的信息\n   - 否则使用自动生成的信息\n   - 执行 `git commit -m \"message\"`\n\n6. **输出结果**\n   - 显示提交的文件列表\n   - 显示最终使用的提交信息\n   - 显示提交哈希\n\n## 使用示例\n\n- `/commit` - 自动生成提交信息并提交\n- `/commit \"fix: urgent hotfix\"` - 使用自定义信息提交",
+      "revision": "7f9dec25d7fdefb9bf42fc7d1a5db9ac41ba63ab94c7f1bb3b23b86a22fa7bb7",
+      "sourceUrl": null,
+      "sourceRef": null,
+      "sourcePath": null,
+      "upstreamRevision": null,
+      "forkedFrom": null,
+      "createdAt": 1776577157390,
+      "updatedAt": 1776577157390,
+      "provenance": {
+        "kind": "manual",
+        "label": ""
+      }
+    }
+  ],
   "projectProfiles": []
 }
