@@ -51,6 +51,33 @@
       "createdAt": 1776577172832,
       "updatedAt": 1776577172832,
       "provenance": {
+        "kind": "file-import",
+        "label": "导入"
+      }
+    },
+    {
+      "id": "de5c04bb-2d64-4aeb-ba64-45225315ecb9",
+      "slug": "harlan-rn",
+      "title": "Harlan RN 架构设计规范",
+      "description": "> 本 skill 是 `harlan-architecture-philosophy` 在 RN 容器项目上的特化。 > 通用设计原则见父级 skill，本文件仅包含 RN 桥接层的具体约定和迁移模板。",
+      "kind": "skill",
+      "scope": "global",
+      "origin": "private",
+      "sourceStatus": "local-only",
+      "projectId": null,
+      "tags": [
+        "imported"
+      ],
+      "content": "---\nname: harlan-rn-architecture\ndescription: Harlan RN 容器架构特化规范 — 基于 harlan-architecture-philosophy 的 RN 桥接层具体实现模板。\nextends: harlan-architecture-philosophy\norigin: custom\n---\n\n# Harlan RN 架构设计规范\n\n> 本 skill 是 `harlan-architecture-philosophy` 在 RN 容器项目上的特化。\n> 通用设计原则见父级 skill，本文件仅包含 RN 桥接层的具体约定和迁移模板。\n\n---\n\n## RN 模块设计模式\n\n### 核心组件\n\n```\nRNMethodDispatcher (单例 — 基础设施层)\n    ├── 接收 RNCallNative 通知\n    ├── 字典查找 registrations[methodName] — O(1)\n    └── 调用 handler.handle()\n\nRNMethodHandler (协议)\n    ├── registeredMethods() -> [String]\n    └── handle(method:params:completion:)\n\nNBVAppManager (外部框架)\n    └── service(for:) — 获取真实服务实例\n```\n\n### 分发流程\n\n```\nRNCallNative 通知\n    ↓\nRNMethodDispatcher.handleRNCallNative()\n    ↓\n字典查找 registrations[methodName]  ← O(1)\n    ↓\nhandler.handle(method:params:completion:)\n    ↓\nNBVAppManager.service(for:) 获取服务\n    ↓\ncompletion(.success(result))\n    ↓\nRNCallBack 通知 → JS 侧\n```\n\n---\n\n## 迁移模板\n\n### 旧代码（继承方式）\n\n```swift\npublic class RNXXXModule: RNCommonModule {\n    @objc func methodA(_ userInfo: RNModel) {\n        // 原有逻辑\n    }\n}\n```\n\n### 新代码（协议方式）\n\n```swift\nfinal class RNXXXHandler: RNMethodHandler {\n    func registeredMethods() -> [String] {\n        return [\"methodA\"]\n    }\n\n    func handle(method: String, params: [String: Any]?,\n                completion: @escaping (Result<Any?, RNMethodError>) -> Void) {\n        switch method {\n        case \"methodA\":\n            handleMethodA(params: params, completion: completion)\n        default:\n            completion(.failure(.methodNotFound(method: method)))\n        }\n    }\n\n    private func handleMethodA(params: [String: Any]?,\n                               completion: @escaping (Result<Any?, RNMethodError>) -> Void) {\n        DispatchQueue.main.async {\n            var error: NBVAppError?\n            if let service = NBVAppManager.service(for: SomeProtocol.self, error: &error) {\n                service.doSomething(params ?? [:]) { result in\n                    completion(.success(result))\n                }\n            } else {\n                completion(.failure(.invocationFailed(method: \"methodA\", underlying: error)))\n            }\n        }\n    }\n}\n\n// 注册\nRNMethodDispatcher.shared.register(RNXXXHandler.self)\n```\n\n### 迁移步骤\n\n1. 新建 Handler 类，删除继承\n2. 实现 `RNMethodHandler` 协议\n3. 在 `registeredMethods()` 列出所有方法名\n4. `handle()` 中用 switch-case 分发\n5. 原有方法改为私有，去掉 `@objc`，参数从 `RNModel` 改为 `params: [String: Any]?`\n6. 最后调用 `completion()` 而非 `NotificationCenter.post`\n\n---\n\n## 文件清单\n\n| 文件 | 职责 |\n|------|------|\n| `RNMethodError.swift` | 错误类型枚举 |\n| `RNMethodHandler.swift` | 方法处理协议 + 注册结构体 |\n| `RNMethodDispatcher.swift` | 核心分发器（单例） |\n",
+      "revision": "a6d45787d53206d78937b9e0ad0768feb1c5d3f5cc8605985a2f0785c3c02654",
+      "sourceUrl": null,
+      "sourceRef": null,
+      "sourcePath": null,
+      "upstreamRevision": null,
+      "forkedFrom": null,
+      "createdAt": 1776577203362,
+      "updatedAt": 1776577203362,
+      "provenance": {
         "kind": "manual",
         "label": ""
       }
