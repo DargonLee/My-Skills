@@ -79,8 +79,8 @@
     {
       "id": "b4069296-affd-4958-a660-bd31ab9804c2",
       "slug": "karpathy-guidelines",
-      "title": "Karpathy Guidelines",
-      "description": "Behavioral guidelines to reduce common LLM coding mistakes, derived from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls.",
+      "title": "karpathy-guidelines",
+      "description": "Behavioral guidelines to reduce common LLM coding mistakes. Use when writing, reviewing, or refactoring code to avoid overcomplication, make surgical changes, surface assumptions, and define verifiable success criteria.",
       "kind": "skill",
       "scope": "global",
       "origin": "private",
@@ -97,7 +97,32 @@
       "upstreamRevision": null,
       "forkedFrom": null,
       "createdAt": 1776667525291,
-      "updatedAt": 1776667525291,
+      "updatedAt": 1776668912116,
+      "provenance": {
+        "kind": "file-import",
+        "label": "导入"
+      }
+    },
+    {
+      "id": "4fbc9cae-d279-4880-be2a-2daecf7c38f5",
+      "slug": "ios-build-device-selection",
+      "title": "ios-build-device-selection",
+      "description": "Prefer device 00008150-001A69800138401C for xcodebuild. If that device is unavailable, fall back to an available iPhone 17 simulator.",
+      "kind": "skill",
+      "scope": "global",
+      "origin": "private",
+      "sourceStatus": "local-only",
+      "projectId": null,
+      "tags": [],
+      "content": "---\nname: ios-build-device-selection\ndescription: Prefer device 00008150-001A69800138401C for xcodebuild. If that device is unavailable, fall back to an available iPhone 17 simulator.\n---\n\n# iOS Build Device Selection\n\nUse this skill when building the RNContainer iOS app with xcodebuild.\n\n## Goal\n\nAlways choose the build destination in this order:\n\n1. Check whether device id 00008150-001A69800138401C exists in the current Xcode device list.\n2. If it exists, use that exact device id for the build.\n3. If it does not exist, choose an available simulator whose name is exactly iPhone 17.\n\n## Workflow\n\n### 1. Check the preferred device first\n\nRun:\n\n```bash\nxcrun xctrace list devices\n```\n\nIf the output contains 00008150-001A69800138401C, build with:\n\n```bash\ncd ios && xcodebuild -workspace RNContainer.xcworkspace -scheme RNContainer -configuration Debug -destination 'id=00008150-001A69800138401C' build\n```\n\n### 2. Fall back to an iPhone 17 simulator\n\nIf the preferred device id is missing, run:\n\n```bash\nxcrun simctl list devices available\n```\n\nChoose a simulator whose displayed name is exactly iPhone 17.\n\nSelection rules:\n\n- Prefer a Booted iPhone 17 simulator if present.\n- Otherwise prefer the highest available iOS version.\n- If multiple entries still match, prefer the arm64 destination reported by xcodebuild.\n\nThen build with that simulator id:\n\n```bash\ncd ios && xcodebuild -workspace RNContainer.xcworkspace -scheme RNContainer -configuration Debug -sdk iphonesimulator -destination 'id=<IPHONE_17_SIMULATOR_ID>' build\n```\n\n### 3. If no iPhone 17 simulator exists\n\nDo not silently switch to another simulator family.\n\nReport that no iPhone 17 simulator is available and suggest creating one in Xcode or with simctl.\n\n## Output Requirements\n\nWhen reporting the build attempt, include:\n\n- whether 00008150-001A69800138401C was found\n- the final chosen destination id\n- whether the build used a physical device or simulator\n- the final xcodebuild exit status\n\n## Min iOS Version Notes\n\nIf the user asks where to change the minimum iOS version, explain these control points:\n\n1. Pod platform baseline is declared in ios/Podfile.\n2. App target deployment target is declared in ios/RNContainer.xcodeproj/project.pbxproj.\n3. Local pod minimum versions are declared in each podspec under ios/Frameworks.\n\nIn this repository specifically, changing only one of those locations can leave the project in an inconsistent state.",
+      "revision": "731dc47aa34399fcc488bfa76c25c9c6e039896b4a48acb1aac41363671c7686",
+      "sourceUrl": null,
+      "sourceRef": null,
+      "sourcePath": null,
+      "upstreamRevision": null,
+      "forkedFrom": null,
+      "createdAt": 1776668936562,
+      "updatedAt": 1776668936562,
       "provenance": {
         "kind": "manual",
         "label": ""
