@@ -99,8 +99,8 @@
       "createdAt": 1776652296671,
       "updatedAt": 1776652296671,
       "provenance": {
-        "kind": "manual",
-        "label": ""
+        "kind": "file-import",
+        "label": "导入"
       }
     }
   ],
