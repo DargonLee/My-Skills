@@ -1,7 +1,6 @@
 ---
 name: harlan-rn-architecture-2
-description: |
-  Harlan 的 iOS/React Native 架构设计风格指南与 Skill。当 Harlan 需要设计新的 SDK、模块、Bridge、原生服务层、CocoaPods 库、或任何跨平台调用链时，使用此 Skill 确保产出符合他一贯的架构思维和设计偏好。
+description: Harlan 的 iOS/React Native 架构设计风格指南与 Skill。当 Harlan 需要设计新的 SDK、模块、Bridge、原生服务层、CocoaPods 库、或任何跨平台调用链时，使用此 Skill 确保产出符合他一贯的架构思维和设计偏好。
   
   触发场景：设计新模块、评审架构方案、规划 SDK 结构、设计 Bridge 层、拆分子系统职责、设计协议/接口规范、规划目录结构、设计原生与 JS 通信机制、CocoaPods podspec 设计、服务注册与依赖注入设计。即使 Harlan 没有明确说"按我的风格"，只要涉及上述话题，也应主动参考本 Skill。
 
