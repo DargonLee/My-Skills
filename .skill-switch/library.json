@@ -228,6 +228,33 @@
       "createdAt": 1777429665269,
       "updatedAt": 1777429665269,
       "provenance": {
+        "kind": "file-import",
+        "label": "导入"
+      }
+    },
+    {
+      "id": "115aeb03-d8f7-456c-9052-1b31072cc5bc",
+      "slug": "commit-workflow",
+      "title": "Commit Workflow",
+      "description": null,
+      "kind": "skill",
+      "scope": "global",
+      "origin": "private",
+      "sourceStatus": "local-only",
+      "projectId": null,
+      "tags": [
+        "imported"
+      ],
+      "content": "---\nname: commit\ndescription: Git commit workflow with conventional format and comprehensive summaries\n---\n\n# Commit Workflow\n\n## Commit Message Format\n\n```\n<type>: <description>\n\n<body>\n\nCo-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>\n```\n\n**Types**: feat, fix, refactor, docs, test, chore, perf, ci\n\n## Workflow Steps\n\n1. **Check status**: `git status` — review untracked and modified files\n2. **Review changes**: `git diff` — understand what changed\n3. **Check history**: `git log --oneline -5` — follow existing commit style\n4. **Stage files**: `git add <files>` — add relevant files only\n5. **Commit**: Use HEREDOC format for multi-line message\n6. **Verify**: `git status` — confirm clean working tree\n\n## Commit Message Guidelines\n\n- **Title**: Short, descriptive, explains what changed (not why)\n- **Body**: Bullet list of key changes, each change on one line\n- **No generic statements**: Avoid \"updated code\", \"fixed issues\"\n- **Be specific**: List actual files/modules affected\n\n## Example\n\n```bash\ngit add .gitignore .swiftlint.yml CLAUDE.md clawd-desk/ clawd-hook/ && \\\ngit commit -m \"$(cat <<'EOF'\nfeat: Swift native clawd-desk initial implementation\n\n- macOS menu-bar accessory app (LSUIElement) with APNG animation\n- clawd-hook CLI for AI agent event forwarding via HTTP\n- HTTP server (port 23333-23337) with state/permission routes\n- Agent abstraction layer for Claude Code + Codex CLI (P0)\n- Permission bubble, session HUD, dashboard UI\n- Theme system (Calico) with 9-state animation mapping\n- SwiftLint configuration for code quality\n\nCo-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>\nEOF\n)\"\n```\n\n## Pre-Commit Checklist\n\n- [ ] No hardcoded secrets (API keys, passwords, tokens)\n- [ ] No `.env` or credential files staged\n- [ ] Changes are logically grouped (one feature/fix per commit)\n- [ ] Commit message explains what changed",
+      "revision": "d8239b145d6b5784eddc915303d2681d6db0d2f6fadb470df6edbc816a639d07",
+      "sourceUrl": null,
+      "sourceRef": null,
+      "sourcePath": null,
+      "upstreamRevision": null,
+      "forkedFrom": null,
+      "createdAt": 1777433195890,
+      "updatedAt": 1777433195890,
+      "provenance": {
         "kind": "manual",
         "label": ""
       }
