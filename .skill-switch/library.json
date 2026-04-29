@@ -208,8 +208,8 @@
     {
       "id": "d05da854-704a-4a53-a007-a51ca6da6b9d",
       "slug": "idea-inbox-skill",
-      "title": "Idea Inbox Skill",
-      "description": "帮助用户在 AI 执行任务期间捕获临时想法，并在合适时机批量处理、主动推进落地。",
+      "title": "idea",
+      "description": "Idea Inbox 管理系统。当用户输入 /idea 时触发，用于批量处理 docs/ideas/inbox.md",
       "kind": "skill",
       "scope": "global",
       "origin": "private",
@@ -218,15 +218,15 @@
       "tags": [
         "imported"
       ],
-      "content": "---\nname: idea\ndescription: >\n  Idea Inbox 管理系统。当用户输入 /idea 时触发，用于批量处理 docs/ideas/inbox.md\n  中暂存的想法并主动推进执行。同时监听用户在 AI 执行任务期间随手记录的新想法。\n  当用户说\"看看我的 inbox\"、\"处理一下想法\"、\"执行 idea\"、\"/idea\" 时立即触发。\n  也应在用户说\"我有个想法先记下来\"时主动引导写入 inbox.md，不打断当前任务。\nallowed-tools: Read, Write, Bash, Edit\n---\n\n# Idea Inbox Skill\n\n帮助用户在 AI 执行任务期间捕获临时想法，并在合适时机批量处理、主动推进落地。\n\n## 两种触发场景\n\n### 场景 A：记录想法（AI 正在执行任务时）\n\n用户在对话框中冒出一个新想法，不想打断当前任务。\n\n**你的行为：**\n1. 识别用户意图是「记录想法」而非「立即执行」\n2. 将想法格式化后追加写入 `docs/ideas/inbox.md`\n3. 回复一句简短确认，**不展开讨论**，不打断当前任务流\n4. 继续执行原来的任务\n\n**确认回复格式（简短）：**\n```\n✓ 已记录到 inbox → #tag 想法摘要\n```\n\n---\n\n### 场景 B：/idea 指令（批量处理）\n\n用户输入 `/idea`，表示当前任务已完成，要处理 inbox 中积累的想法。\n\n**执行流程：**\n\n#### Step 1：读取 inbox\n读取 `docs/ideas/inbox.md`，若文件不存在则创建并告知用户 inbox 为空。\n\n#### Step 2：分类展示\n将所有未处理条目按标签分组展示，供用户确认优先级：\n\n```\n📋 Inbox 共 N 条想法\n\n🚀 #feature (2)\n  [ ] 支持暗色主题\n  [ ] 添加导出功能\n\n🐛 #bug (1)\n  [ ] 登录页按钮对齐问题\n\n❓ #question (1)\n  [ ] 这里为什么用 useEffect 而非 useMemo？\n\n💭 #note (1)\n  [ ] 重构时考虑抽象 BaseViewModel\n```\n\n询问用户：「全部处理，还是指定某类先来？」\n\n#### Step 3：逐条主动推进\n\n对每条想法，根据标签采取不同行动：\n\n| 标签 | 行动策略 |\n|------|----------|\n| `#feature` | 分析可行性 → 拆解实现步骤 → 询问是否立即开始 |\n| `#bug` | 定位可能原因 → 给出修复方案 → 询问是否立即修复 |\n| `#question` | 直接回答问题 → 给出建议 |\n| `#refactor` | 分析重构影响范围 → 提出方案 → 询问优先级 |\n| `#note` | 确认理解 → 问是否需要进一步行动 |\n| 无标签 | 先判断类型，再按上述策略处理 |\n\n**主动推进原则：** 不只是「回答」，而是主动提出「我现在就可以帮你做 X，要开始吗？」\n\n#### Step 4：归档处理结果\n\n处理完毕后：\n1. 将已处理条目移动到 `docs/ideas/processed.md`（附处理时间和结论摘要）\n2. 从 `inbox.md` 中删除已处理条目\n3. 输出归档摘要\n\n---\n\n## inbox.md 格式规范\n\n```markdown\n# Idea Inbox\n\n<!-- AI 执行任务期间随手记录的想法，/idea 时批量处理 -->\n\n- [ ] #feature 支持多语言切换\n- [ ] #bug 首页在 iPad 横屏时布局错乱\n- [ ] #question 这里的 useCallback 依赖数组是否完整？\n- [ ] #refactor 考虑将 NBAdapter 拆成更小的模块\n- [ ] #note 下次和团队讨论 API 版本策略\n```\n\n**标签说明：**\n- `#feature` — 新功能/改进建议\n- `#bug` — 缺陷发现\n- `#question` — 技术疑问\n- `#refactor` — 重构想法\n- `#note` — 备忘/待讨论\n\n无标签也可以，AI 会自动判断类型。\n\n---\n\n## processed.md 归档格式\n\n```markdown\n# Processed Ideas\n\n## 2026-04-29\n\n### ✅ #feature 支持暗色主题\n- **结论：** 可行，已拆解为 3 步：(1) CSS 变量改造 (2) 系统主题检测 (3) 用户偏好持久化\n- **状态：** 已开始执行\n\n### ✅ #bug 登录页按钮对齐\n- **结论：** `flex` 容器缺少 `align-items: center`，已修复\n- **状态：** 已完成\n```\n\n---\n\n## 初始化\n\n首次使用时，若 `docs/ideas/` 目录不存在：\n\n```bash\nmkdir -p docs/ideas\n```\n\n创建 `inbox.md` 模板（参考上方格式规范）和空的 `processed.md`。\n\n并在项目 `CLAUDE.md` 中追加：\n\n```markdown\n## Idea Inbox\n\n随手记录的想法存放在 `docs/ideas/inbox.md`，使用 `/idea` 批量处理。\n标签：#feature #bug #question #refactor #note\n```\n\n---\n\n## 边界处理\n\n- **inbox 为空时：** 告知用户 inbox 清空，询问是否有新想法要记录\n- **想法描述模糊时：** 先追加原文，处理时再澄清\n- **用户只想记录不想处理：** 尊重用户，只写入不展开\n- **文件不存在：** 自动创建，不报错\n",
-      "revision": "d71ada2318956ed63f363ae7579890a93d2bf0c4d597c7030c8421d023b6a206",
+      "content": "---\nname: idea\ndescription: Idea Inbox 管理系统。当用户输入 /idea 时触发，用于批量处理 docs/ideas/inbox.md\n  中暂存的想法并主动推进执行。同时监听用户在 AI 执行任务期间随手记录的新想法。\n  当用户说\"看看我的 inbox\"、\"处理一下想法\"、\"执行 idea\"、\"/idea\" 时立即触发。\n  也应在用户说\"我有个想法先记下来\"时主动引导写入 inbox.md，不打断当前任务。\nallowed-tools: Read, Write, Bash, Edit\n---\n\n# Idea Inbox Skill\n\n帮助用户在 AI 执行任务期间捕获临时想法，并在合适时机批量处理、主动推进落地。\n\n## 两种触发场景\n\n### 场景 A：记录想法（AI 正在执行任务时）\n\n用户在对话框中冒出一个新想法，不想打断当前任务。\n\n**你的行为：**\n1. 识别用户意图是「记录想法」而非「立即执行」\n2. 将想法格式化后追加写入 `docs/ideas/inbox.md`\n3. 回复一句简短确认，**不展开讨论**，不打断当前任务流\n4. 继续执行原来的任务\n\n**确认回复格式（简短）：**\n```\n✓ 已记录到 inbox → #tag 想法摘要\n```\n\n---\n\n### 场景 B：/idea 指令（批量处理）\n\n用户输入 `/idea`，表示当前任务已完成，要处理 inbox 中积累的想法。\n\n**执行流程：**\n\n#### Step 1：读取 inbox\n读取 `docs/ideas/inbox.md`，若文件不存在则创建并告知用户 inbox 为空。\n\n#### Step 2：分类展示\n将所有未处理条目按标签分组展示，供用户确认优先级：\n\n```\n📋 Inbox 共 N 条想法\n\n🚀 #feature (2)\n  [ ] 支持暗色主题\n  [ ] 添加导出功能\n\n🐛 #bug (1)\n  [ ] 登录页按钮对齐问题\n\n❓ #question (1)\n  [ ] 这里为什么用 useEffect 而非 useMemo？\n\n💭 #note (1)\n  [ ] 重构时考虑抽象 BaseViewModel\n```\n\n询问用户：「全部处理，还是指定某类先来？」\n\n#### Step 3：逐条主动推进\n\n对每条想法，根据标签采取不同行动：\n\n| 标签 | 行动策略 |\n|------|----------|\n| `#feature` | 分析可行性 → 拆解实现步骤 → 询问是否立即开始 |\n| `#bug` | 定位可能原因 → 给出修复方案 → 询问是否立即修复 |\n| `#question` | 直接回答问题 → 给出建议 |\n| `#refactor` | 分析重构影响范围 → 提出方案 → 询问优先级 |\n| `#note` | 确认理解 → 问是否需要进一步行动 |\n| 无标签 | 先判断类型，再按上述策略处理 |\n\n**主动推进原则：** 不只是「回答」，而是主动提出「我现在就可以帮你做 X，要开始吗？」\n\n#### Step 4：归档处理结果\n\n处理完毕后：\n1. 将已处理条目移动到 `docs/ideas/processed.md`（附处理时间和结论摘要）\n2. 从 `inbox.md` 中删除已处理条目\n3. 输出归档摘要\n\n---\n\n## inbox.md 格式规范\n\n```markdown\n# Idea Inbox\n\n<!-- AI 执行任务期间随手记录的想法，/idea 时批量处理 -->\n\n- [ ] #feature 支持多语言切换\n- [ ] #bug 首页在 iPad 横屏时布局错乱\n- [ ] #question 这里的 useCallback 依赖数组是否完整？\n- [ ] #refactor 考虑将 NBAdapter 拆成更小的模块\n- [ ] #note 下次和团队讨论 API 版本策略\n```\n\n**标签说明：**\n- `#feature` — 新功能/改进建议\n- `#bug` — 缺陷发现\n- `#question` — 技术疑问\n- `#refactor` — 重构想法\n- `#note` — 备忘/待讨论\n\n无标签也可以，AI 会自动判断类型。\n\n---\n\n## processed.md 归档格式\n\n```markdown\n# Processed Ideas\n\n## 2026-04-29\n\n### ✅ #feature 支持暗色主题\n- **结论：** 可行，已拆解为 3 步：(1) CSS 变量改造 (2) 系统主题检测 (3) 用户偏好持久化\n- **状态：** 已开始执行\n\n### ✅ #bug 登录页按钮对齐\n- **结论：** `flex` 容器缺少 `align-items: center`，已修复\n- **状态：** 已完成\n```\n\n---\n\n## 初始化\n\n首次使用时，若 `docs/ideas/` 目录不存在：\n\n```bash\nmkdir -p docs/ideas\n```\n\n创建 `inbox.md` 模板（参考上方格式规范）和空的 `processed.md`。\n\n并在项目 `CLAUDE.md` 中追加：\n\n```markdown\n## Idea Inbox\n\n随手记录的想法存放在 `docs/ideas/inbox.md`，使用 `/idea` 批量处理。\n标签：#feature #bug #question #refactor #note\n```\n\n---\n\n## 边界处理\n\n- **inbox 为空时：** 告知用户 inbox 清空，询问是否有新想法要记录\n- **想法描述模糊时：** 先追加原文，处理时再澄清\n- **用户只想记录不想处理：** 尊重用户，只写入不展开\n- **文件不存在：** 自动创建，不报错\n",
+      "revision": "48a9451f9a6d780f91b5b8705885739b406e37ee4a91b47ce6e2363917e388dd",
       "sourceUrl": null,
       "sourceRef": null,
       "sourcePath": null,
       "upstreamRevision": null,
       "forkedFrom": null,
       "createdAt": 1777429665269,
-      "updatedAt": 1777429665269,
+      "updatedAt": 1777442812062,
       "provenance": {
         "kind": "file-import",
         "label": "导入"
@@ -235,8 +235,8 @@
     {
       "id": "115aeb03-d8f7-456c-9052-1b31072cc5bc",
       "slug": "commit-workflow",
-      "title": "Commit Workflow",
-      "description": null,
+      "title": "commit",
+      "description": "Git commit workflow with conventional format and comprehensive summaries",
       "kind": "skill",
       "scope": "global",
       "origin": "private",
@@ -253,10 +253,10 @@
       "upstreamRevision": null,
       "forkedFrom": null,
       "createdAt": 1777433195890,
-      "updatedAt": 1777433195890,
+      "updatedAt": 1777442706711,
       "provenance": {
-        "kind": "manual",
-        "label": ""
+        "kind": "file-import",
+        "label": "导入"
       }
     }
   ],

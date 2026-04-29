@@ -1,7 +1,6 @@
 ---
 name: idea
-description: >
-  Idea Inbox 管理系统。当用户输入 /idea 时触发，用于批量处理 docs/ideas/inbox.md
+description: Idea Inbox 管理系统。当用户输入 /idea 时触发，用于批量处理 docs/ideas/inbox.md
   中暂存的想法并主动推进执行。同时监听用户在 AI 执行任务期间随手记录的新想法。
   当用户说"看看我的 inbox"、"处理一下想法"、"执行 idea"、"/idea" 时立即触发。
   也应在用户说"我有个想法先记下来"时主动引导写入 inbox.md，不打断当前任务。
