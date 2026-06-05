@@ -1,6 +1,6 @@
-你可以创建一个专门给 AI 使用的 `skill` 文档，用于解释你的 VApp Runtime / Bridge 架构。
-下面这份内容已经按照「AI 易理解 + 可用于 Cursor / Claude / ChatGPT System Prompt / MCP Skill」的风格整理好了。
-
+---
+name: vapp-skill
+description: VApp Native Bridge Runtime 架构文档。解释 VApp 的事件驱动 Native Bridge 设计，包括 TurboModule、NotificationCenter 分发、Protocol-oriented 服务查找。当用户提及 VApp、RN Bridge、Native Bridge、TurboModule、callNative 时自动触发。
 ---
 
 # VApp Native Bridge Runtime Skill

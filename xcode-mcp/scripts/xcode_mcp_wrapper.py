@@ -11,11 +11,11 @@ Usage:
     python3 xcode_mcp_wrapper.py build [scheme]
 """
 
-import subprocess
 import json
-import sys
 import os
 import select
+import subprocess
+import sys
 import time
 
 MCPBRIDGE_PATH = "/Applications/Xcode-26.5.0-Release.Candidate.app/Contents/Developer/usr/bin/mcpbridge"
