@@ -1,0 +1,34 @@
+{
+  "name": "my-skills",
+  "owner": {
+    "name": "Harlan (ninebot)",
+    "email": "hailong.li@ninebot.com"
+  },
+  "metadata": {
+    "description": "Personal skill collection for Claude Code - architecture, iOS/RN bridge, web design, and workflow skills",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "my-skills",
+      "description": "Architecture patterns, iOS/RN bridge docs, web design standards, and workflow automation skills",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/harlan-architecture",
+        "./skills/harlan-architecture-philosophy",
+        "./skills/harlan-rn-architecture",
+        "./skills/harlan-rn-architecture-2",
+        "./skills/vapp-skill",
+        "./skills/web-design-engineer",
+        "./skills/ios-build-device-selection",
+        "./skills/karpathy-guidelines",
+        "./skills/skill-health",
+        "./skills/xcode-mcp",
+        "./skills/idea-inbox-skill",
+        "./skills/commit-workflow",
+        "./skills/git-commit"
+      ]
+    }
+  ]
+}

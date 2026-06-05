@@ -4,32 +4,42 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Repo Is
 
-A personal collection of Claude Code SKILL.md files — structured system prompts for AI coding agents. Skills are stored as directories at the repo root, each containing a `SKILL.md` file.
+A personal collection of Claude Code SKILL.md files — structured system prompts for AI coding agents. Skills are stored in the `skills/` directory, each containing a `SKILL.md` file.
 
-## Skill Registry
+## Skill Registry (cc-switch Marketplace Format)
 
-Skills are registered via `.skill-switch/library.json`, a v2-format metadata registry that:
-- Tracks all installed skills with `scope: global` (available across all Claude Code sessions)
-- Embeds full SKILL.md content as a `content` field (not file references)
-- Must stay synced with actual SKILL.md files in each skill directory
+Skills are registered via `.claude-plugin/marketplace.json`, the official cc-switch/marketplace format:
+- Defines plugins with skill paths (not embedded content)
+- Skills live in `skills/` subdirectory
+- Compatible with SkillSwitch and Claude Code marketplace
 
-## Key Skills (10 registered)
+**Legacy**: `.skill-switch/library.json` (v2 format) still exists for backward compatibility, but marketplace.json is the primary registry.
 
-- `harlan-architecture` — Unified full-stack architecture skill (supersedes older Harlan variants)
-- `vapp-skill` — VApp Native Bridge runtime documentation (ObjC/Swift RN bridge)
-- `web-design-engineer` — Web design quality standards with CDN-based React patterns
-- `ios-build-device-selection` — Xcode build device preferences
-- `karpathy-guidelines` — Behavioral guidelines for LLM coding (imported, MIT license)
-- `skill-health` — Skill collection audit: redundancy, frontmatter, sync check
-- `xcode-mcp` — Xcode mcpbridge interaction and run-agent configuration
+## Key Skills (13 registered)
+
+| Skill | Description |
+|-------|-------------|
+| `harlan-architecture` | Unified full-stack architecture skill (supersedes older variants) |
+| `harlan-architecture-philosophy` | Architecture philosophy and design principles |
+| `harlan-rn-architecture` | RN/iOS bridge patterns |
+| `harlan-rn-architecture-2` | RN architecture variant |
+| `vapp-skill` | VApp Native Bridge runtime documentation (ObjC/Swift RN bridge) |
+| `web-design-engineer` | Web design quality standards with CDN-based React patterns |
+| `ios-build-device-selection` | Xcode build device preferences |
+| `karpathy-guidelines` | Behavioral guidelines for LLM coding (MIT license) |
+| `skill-health` | Skill collection audit: redundancy, frontmatter, sync check |
+| `xcode-mcp` | Xcode mcpbridge interaction and run-agent configuration |
+| `idea-inbox-skill` | Idea inbox management workflow |
+| `commit-workflow` | Git commit workflow with conventional format |
+| `git-commit` | Smart git commit automation |
 
 ## Gotchas
 
-- **Hardcoded paths**: `xcode_mcp_wrapper.py` and `xcode-mcp/SKILL.md` hardcode Xcode path (`/Applications/Xcode-26.5.0-Release.Candidate.app/...`) — update on Xcode version changes
+- **Hardcoded paths**: `xcode-mcp/scripts/xcode_mcp_wrapper.py` hardcodes Xcode path — update on Xcode version changes
 - **Device UUIDs**: `ios-build-device-selection` contains user-specific hardware IDs
 
 ## Repo Etiquette
 
-- When adding new skills: create directory with `SKILL.md`, add entry to `library.json`
-- When deprecating skills: remove from `library.json` or mark deprecated
-- Skill frontmatter: `name`, `description` are required; `scope: global` for all current skills
+- When adding new skills: create directory in `skills/` with `SKILL.md`, add path to `marketplace.json`
+- When deprecating skills: remove path from `marketplace.json`
+- Skill frontmatter: `name`, `description` are required
