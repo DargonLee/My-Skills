@@ -1,0 +1,4 @@
+interface:
+  display_name: "Engineering Layered Design"
+  short_description: "Layered code design and responsibility boundaries"
+  default_prompt: "Use $engineering-layered-design to review this implementation and separate source, transformation, orchestration, extension points, and UI responsibilities."
