@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "2d5ea2ac-82d0-4c6b-82ad-63f5f717c310",
+  "path": "skills/harlan-rn-architecture-2",
+  "path_key": "skills/harlan-rn-architecture-2",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

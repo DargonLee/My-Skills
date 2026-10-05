@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "fea5df6a-09fd-4f99-a599-37e3f81b88ed",
+  "path": "skills/idea-inbox-skill",
+  "path_key": "skills/idea-inbox-skill",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

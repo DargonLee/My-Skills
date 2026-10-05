@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "d6c278f8-8662-4e21-99f7-a789b727fd55",
+  "path": "skills/vapp-skill",
+  "path_key": "skills/vapp-skill",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "965831e0-a4b8-4c87-bdb1-b45008faa4e4",
+  "path": "skills/skill-health",
+  "path_key": "skills/skill-health",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

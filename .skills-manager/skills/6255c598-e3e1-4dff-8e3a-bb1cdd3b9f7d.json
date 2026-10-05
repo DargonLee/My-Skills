@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "6255c598-e3e1-4dff-8e3a-bb1cdd3b9f7d",
+  "path": "skills/vapp-method-generator",
+  "path_key": "skills/vapp-method-generator",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

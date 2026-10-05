@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "e664787d-a599-4b30-9c5c-b4c88286ab80",
+  "path": "migrate-github-pod",
+  "path_key": "migrate-github-pod",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

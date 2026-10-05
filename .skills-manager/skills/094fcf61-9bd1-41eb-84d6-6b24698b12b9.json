@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "094fcf61-9bd1-41eb-84d6-6b24698b12b9",
+  "path": "build-iphone-apps",
+  "path_key": "build-iphone-apps",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "9c7b0a0b-2937-40f2-bcb1-9af016a3a3d6",
+  "path": "teach-impeccable",
+  "path_key": "teach-impeccable",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

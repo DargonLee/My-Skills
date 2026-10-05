@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "aa066808-94b0-4a98-87a2-820e73359547",
+  "path": "skills/engineering-layered-design",
+  "path_key": "skills/engineering-layered-design",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

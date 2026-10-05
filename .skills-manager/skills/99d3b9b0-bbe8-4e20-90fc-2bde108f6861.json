@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "99d3b9b0-bbe8-4e20-90fc-2bde108f6861",
+  "path": "skill-hub-contributor",
+  "path_key": "skill-hub-contributor",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

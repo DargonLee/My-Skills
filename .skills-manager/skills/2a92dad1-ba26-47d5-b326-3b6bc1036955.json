@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "2a92dad1-ba26-47d5-b326-3b6bc1036955",
+  "path": "skills/commit-workflow",
+  "path_key": "skills/commit-workflow",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

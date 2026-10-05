@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "ea4c181a-9db9-408c-b3f9-1c2f8b916c24",
+  "path": "skill-installer",
+  "path_key": "skill-installer",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

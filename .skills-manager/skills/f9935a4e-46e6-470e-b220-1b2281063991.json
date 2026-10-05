@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "f9935a4e-46e6-470e-b220-1b2281063991",
+  "path": "skills/review-uncommitted",
+  "path_key": "skills/review-uncommitted",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

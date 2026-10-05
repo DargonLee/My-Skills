@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "a6869817-a211-4353-94d8-00f70eedfb42",
+  "path": "skills/harlan-architecture",
+  "path_key": "skills/harlan-architecture",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

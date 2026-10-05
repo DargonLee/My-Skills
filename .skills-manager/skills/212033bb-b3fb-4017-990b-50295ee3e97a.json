@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "212033bb-b3fb-4017-990b-50295ee3e97a",
+  "path": "skills/ios-build-device-selection",
+  "path_key": "skills/ios-build-device-selection",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "5067a3a9-2f7f-459e-9316-c35e547f978d",
+  "path": "react-native-architecture",
+  "path_key": "react-native-architecture",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "d676fca8-f747-49a6-bd94-722525bea615",
+  "path": "optimize",
+  "path_key": "optimize",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

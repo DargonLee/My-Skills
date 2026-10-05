@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "262e63ea-349b-41a9-9171-ee1c1c90e1a1",
+  "path": "skills/xcode-mcp",
+  "path_key": "skills/xcode-mcp",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}

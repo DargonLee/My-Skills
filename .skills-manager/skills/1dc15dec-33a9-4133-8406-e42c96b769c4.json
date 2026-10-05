@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "skill_id": "1dc15dec-33a9-4133-8406-e42c96b769c4",
+  "path": "skills/harlan-architecture-philosophy",
+  "path_key": "skills/harlan-architecture-philosophy",
+  "enabled": true,
+  "tags": [],
+  "source": {
+    "type": "import",
+    "ref": null,
+    "subpath": null,
+    "branch": null
+  }
+}
