@@ -1,0 +1,9 @@
+# Android job 登记（随 skill 分发；凭据另见 env/android.env，不要写在这里）
+# 脚本白名单与别名都从本文件读取：改 job 名只改这里和 platforms/android.md。
+# Jenkins：https://jenkins.ninebot.com（主 Jenkins，与鸿蒙共用）
+
+# 国内打包 job（人工触发的测试包；机器人只查询）别名：cn / 国内
+ANDROID_JOB_CN=ninebot-android-国内-v6-copy
+# 海外打包 job（人工触发的测试包；机器人只查询）别名：os / overseas / 海外
+# 2026-10-20 用户更正：由 ninebot-android-海外-develop分支（零构建）改为本 job
+ANDROID_JOB_OS=ninebot-android-海外-v6

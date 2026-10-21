@@ -1,0 +1,10 @@
+# HarmonyOS job 登记（随 skill 分发；凭据另见 env/harmony.env，不要写在这里）
+# 脚本白名单与别名都从本文件读取：改 job 名只改这里和 platforms/harmony.md。
+# Jenkins：https://jenkins.ninebot.com（主 Jenkins，与 Android 共用）
+
+# 鸿蒙邀请测试打包（机器人可 trigger）别名：agc / 鸿蒙
+HARMONY_JOB_AGC=ninebot-harmony-agc
+# 旧 HAP job（2026-08/09 起未用；机器人只查询）
+HARMONY_JOB_HAP=ninebot-hap
+HARMONY_JOB_HAP_DEVELOP=ninebot-hap-develop
+HARMONY_JOB_HAP_SIGNER=ninebot-hap-signer

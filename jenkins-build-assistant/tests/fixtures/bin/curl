@@ -1,0 +1,165 @@
+#!/bin/bash
+# Offline curl stub. An unhandled request fails rather than reaching Jenkins.
+set -euo pipefail
+
+[ -z "${CURL_MARKER:-}" ] || : > "$CURL_MARKER"
+[ -n "${MOCK_SCENARIO:-}" ] || { echo "Unexpected curl call" >&2; exit 99; }
+
+output="" headers="" method=GET url=""
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    -o) output="$2"; shift 2 ;;
+    -D) headers="$2"; shift 2 ;;
+    -X) method="$2"; shift 2 ;;
+    --data-urlencode)
+      [ -z "${MOCK_CALLS_FILE:-}" ] || printf 'PARAM %s\n' "$2" >> "$MOCK_CALLS_FILE"
+      shift 2 ;;
+    -b|-c|-H|-m|-u|-w) shift 2 ;;
+    -sS|-g) shift ;;
+    http*) url="$1"; shift ;;
+    *) echo "Unexpected curl argument: $1" >&2; exit 99 ;;
+  esac
+done
+
+base="${JENKINS_BASE:-https://jenkins-ios.ninebot.com}"
+case "$url" in
+  "$base"/*) path="${url#"$base"}" ;;
+  *) echo "Unexpected Jenkins URL: $url" >&2; exit 99 ;;
+esac
+[ -z "${MOCK_CALLS_FILE:-}" ] || printf '%s %s\n' "$method" "$path" >> "$MOCK_CALLS_FILE"
+
+code=200 body='' location=''
+job='/job/v6-Enterprise-2'
+hjob='/job/ninebot-harmony-agc'
+# Android job 名含中文，脚本会 URL 编码；这里同样编码后再匹配
+ajob="/job/$(python3 -c 'import urllib.parse;print(urllib.parse.quote("ninebot-android-国内-v6-copy", safe=""))')"
+aos="/job/$(python3 -c 'import urllib.parse;print(urllib.parse.quote("ninebot-android-海外-v6", safe=""))')"
+# 队列项 77 在哪个 Jenkins 上就对应哪个 job 的构建号
+if [ "$base" = "https://jenkins.ninebot.com" ]; then
+  queued_build=343
+else
+  queued_build=2040
+fi
+case "$path" in
+  /crumbIssuer/api/json)
+    body='{"crumb":"fixture-crumb"}' ;;
+  /queue/api/json\?tree=items\[id,task\[name\]\]|/queue/api/json\?tree=items\[id,why,task\[name\]\])
+    case "$MOCK_SCENARIO" in
+      queue|queue_and_running|cancel) body='{"items":[{"id":77,"task":{"name":"v6-Enterprise-2"},"why":"Waiting"}]}' ;;
+      queue_multiple) body='{"items":[{"id":77,"task":{"name":"v6-Enterprise-2"}},{"id":78,"task":{"name":"v6-Enterprise-2"}}]}' ;;
+      query_error|building_status) code=503 ;;
+      *) body='{"items":[]}' ;;
+    esac ;;
+  "$job"/lastBuild/api/json\?tree=number,building)
+    if [ "$MOCK_SCENARIO" = running ] || [ "$MOCK_SCENARIO" = queue_and_running ]; then
+      body='{"number":2056,"building":true}'
+    else
+      body='{"number":2040,"building":false}'
+    fi ;;
+  "$job"/lastBuild/api/json\?tree=number,result,building,duration,timestamp,url|"$job"/2041/api/json\?tree=number,result,building,duration,timestamp,url)
+    body='{"number":2041,"result":"FAILURE","building":false,"duration":120000,"url":"https://jenkins-ios.ninebot.com/job/v6-Enterprise-2/2041/"}' ;;
+  "$job"/2056/api/json\?tree=number,result,building,duration,timestamp,url)
+    body='{"number":2056,"result":null,"building":true,"duration":0,"url":"https://jenkins-ios.ninebot.com/job/v6-Enterprise-2/2056/"}' ;;
+  "$job"/2040/api/json\?tree=number,building,result)
+    if [ "$MOCK_SCENARIO" = pending ]; then
+      body='{"number":2040,"building":false,"result":null}'
+    else
+      body='{"number":2040,"building":false,"result":"SUCCESS"}'
+    fi ;;
+  "$job"/2041/api/json\?tree=number,building,result)
+    body='{"number":2041,"building":false,"result":"FAILURE"}' ;;
+  "$job"/2040/api/json\?tree=number,result,building,duration,timestamp,url|"$job"/lastSuccessfulBuild/api/json\?tree=number,result,duration,timestamp,url)
+    if [ "$MOCK_SCENARIO" = pending ]; then
+      body='{"number":2040,"result":null,"building":false,"duration":0,"url":"https://jenkins-ios.ninebot.com/job/v6-Enterprise-2/2040/"}'
+    else
+      body='{"number":2040,"result":"SUCCESS","building":false,"duration":960000,"url":"https://jenkins-ios.ninebot.com/job/v6-Enterprise-2/2040/"}'
+    fi ;;
+  /queue/item/77/api/json\?tree=executable\[number\],cancelled|/queue/item/77/api/json\?tree=executable\[number\])
+    body='{"executable":{"number":'"$queued_build"'},"cancelled":false}' ;;
+  /queue/item/78/api/json\?tree=executable\[number\],cancelled)
+    code=404 ;;
+  "$job"/api/json\?tree=builds\[number,queueId\]\{0,20\})
+    body='{"builds":[{"number":2040,"queueId":78}]}' ;;
+  "$job"/2040/consoleText)
+    if [ "$MOCK_SCENARIO" = console_error ] || [ "$MOCK_SCENARIO" = console_error_with_artifact ]; then
+      code=503
+    elif [ "$MOCK_SCENARIO" = no_link ] || [ "$MOCK_SCENARIO" = artifact_only ]; then
+      body='Finished: SUCCESS'
+    else
+      body=$'[UPLOAD TO PGYER] - 版本号：6.10.12.2040\n[UPLOAD TO PGYER] - build号：151\n[UPLOAD TO PGYER] - 版本编号：2040\n应用构建主页：https://www.pgyer.com/fixture\n应用短链接：fixture-short\nFinished: SUCCESS'
+    fi ;;
+  "$job"/2040/api/json\?tree=url,artifacts\[fileName,relativePath\])
+    if [ "$MOCK_SCENARIO" = artifact_only ] || [ "$MOCK_SCENARIO" = console_error_with_artifact ]; then
+      body='{"url":"https://jenkins-ios.ninebot.com/job/v6-Enterprise-2/2040/","artifacts":[{"fileName":"build.log","relativePath":"logs/build.log"},{"fileName":"Ninebot_mainland_develop_test_v6.10.12(2040)_20261020_1838.ipa","relativePath":"ios/ipa/Ninebot_mainland_develop_test_v6.10.12(2040)_20261020_1838.ipa"}]}'
+    else
+      body='{"url":"https://jenkins-ios.ninebot.com/job/v6-Enterprise-2/2040/","artifacts":[]}'
+    fi ;;
+  "$job"/2041/consoleText)
+    if [ "$MOCK_SCENARIO" = console_error ]; then
+      code=503
+    else
+      body=$'Checking out Revision abcdef123456 (origin/develop)\nCommit message: "Fix build"\nfatal error: compile failed\nerror: API_TOKEN=secret-value\nBuild step '\''Upload to pgyer with apiV2'\'' marked build as failure'
+    fi ;;
+  "$job"/2041/api/json\?tree=changeSet\[items\[author\[fullName\],msg,timestamp,commitId\]\])
+    body='{"changeSet":{"items":[{"author":{"fullName":"Alice"},"msg":"Fix build"},{"author":{"fullName":"Bob"},"msg":"token=secret-value"}]}}' ;;
+  "$job"/buildWithParameters|"$hjob"/buildWithParameters)
+    [ "$method" = POST ] || exit 99
+    case "$MOCK_SCENARIO" in
+      trigger|running) code=201; location="$base/queue/item/77/" ;;
+      trigger_no_location) code=201 ;;
+      trigger_other_location) code=201; location="$base/job/v6-Enterprise-2/" ;;
+      trigger_http_error) code=503 ;;
+      trigger_transport_error) exit 7 ;;
+      *) exit 99 ;;
+    esac ;;
+  /queue/cancelItem\?id=77)
+    [ "$method" = POST ] || exit 99
+    code=302 ;;
+  /api/json\?tree=jobs\[name\])
+    body='{"jobs":[{"name":"v6-Enterprise-2"}]}' ;;
+  # ---- HarmonyOS: ninebot-harmony-agc（#343 成功，产物走 AGC 邀请测试）----
+  "$hjob"/lastBuild/api/json\?tree=number,building)
+    if [ "$MOCK_SCENARIO" = running ]; then
+      body='{"number":344,"building":true}'
+    else
+      body='{"number":343,"building":false}'
+    fi ;;
+  "$hjob"/343/api/json\?tree=number,building,result)
+    body='{"number":343,"building":false,"result":"SUCCESS"}' ;;
+  "$hjob"/343/api/json\?tree=number,result,building,duration,timestamp,url|"$hjob"/lastBuild/api/json\?tree=number,result,building,duration,timestamp,url|"$hjob"/lastSuccessfulBuild/api/json\?tree=number,result,duration,timestamp,url)
+    body='{"number":343,"result":"SUCCESS","building":false,"duration":888000,"url":"https://jenkins.ninebot.com/job/ninebot-harmony-agc/343/"}' ;;
+  "$hjob"/343/consoleText)
+    if [ "$MOCK_SCENARIO" = console_error ]; then
+      code=503
+    elif [ "$MOCK_SCENARIO" = no_link ]; then
+      body='Finished: SUCCESS'
+    else
+      body=$'Updated AppScope/app.json5: versionName 6.10.13 -> 6.10.13, versionCode 610130001 -> 610131377\nSubmitting invited test version for review...\nInvited test share link: https://appgallery.huawei.com/apptest/join/fixture\n构建编号: 343\n分享链接: https://appgallery.huawei.com/apptest/join/fixture\nFinished: SUCCESS'
+    fi ;;
+  # ---- Android: 国内 job #1277、海外 job #1895 成功且不上传蒲公英；no_builds 场景模拟从未构建（404）----
+  "$ajob"/lastBuild/api/json\?tree=number,building)
+    body='{"number":1277,"building":false}' ;;
+  "$ajob"/1277/api/json\?tree=number,building,result)
+    body='{"number":1277,"building":false,"result":"SUCCESS"}' ;;
+  "$ajob"/1277/api/json\?tree=number,result,building,duration,timestamp,url|"$ajob"/lastBuild/api/json\?tree=number,result,building,duration,timestamp,url|"$ajob"/lastSuccessfulBuild/api/json\?tree=number,result,duration,timestamp,url)
+    body='{"number":1277,"result":"SUCCESS","building":false,"duration":1500000,"url":"https://jenkins.ninebot.com/job/ninebot-android-%E5%9B%BD%E5%86%85-v6-copy/1277/"}' ;;
+  "$ajob"/1277/consoleText)
+    if [ "$MOCK_SCENARIO" = console_error ]; then
+      code=503
+    else
+      body=$'[NHPProtect] [I] protected success. outfile is /Users/ninebot/.jenkins/workspace/x/app/build/outputs/apk/domestic/debug/Segway-Ninebot_v6.10.13_domestic_debug_202610201033_ddfe151186_with_so_encrypted.apk\n本次构建不上传蒲公英\nFinished: SUCCESS'
+    fi ;;
+  "$aos"/lastBuild/api/json\?tree=number,result,building,duration,timestamp,url|"$aos"/lastSuccessfulBuild/api/json\?tree=number,result,duration,timestamp,url|"$aos"/1895/api/json\?tree=number,result,building,duration,timestamp,url)
+    if [ "$MOCK_SCENARIO" = no_builds ]; then
+      code=404
+    else
+      body='{"number":1895,"result":"SUCCESS","building":false,"duration":3120000,"url":"https://jenkins.ninebot.com/job/ninebot-android-%E6%B5%B7%E5%A4%96-v6/1895/"}'
+    fi ;;
+  "$aos"/1895/consoleText)
+    body=$'[NHPProtect] [I] protected success. outfile is /Users/ninebot/.jenkins/workspace/x/app/build/outputs/apk/overseas/debug/Segway-Ninebot_v6.10.13_overseas_debug_202610191945_ce5ddf9_with_so_encrypted.apk\n本次构建不上传蒲公英\nFinished: SUCCESS' ;;
+  *) echo "Unhandled curl request: $method $path" >&2; exit 99 ;;
+esac
+
+[ -z "$output" ] && printf '%s' "$body" || printf '%s' "$body" > "$output"
+[ -z "$headers" ] || printf 'Location: %s\r\n' "$location" > "$headers"
+printf '%s' "$code"

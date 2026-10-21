@@ -1,0 +1,5 @@
+#!/bin/bash
+# Offline osascript stub: records the notification call instead of showing it.
+set -euo pipefail
+[ -z "${NOTIFY_CALLS_FILE:-}" ] || printf 'osascript %s\n' "$*" >> "$NOTIFY_CALLS_FILE"
+exit 0

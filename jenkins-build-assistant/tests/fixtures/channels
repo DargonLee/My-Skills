@@ -1,0 +1,8 @@
+IOS_CN_URL=https://example.invalid/ios-cn
+IOS_CN_PASSWORD=test-ios-cn-password
+IOS_OS_URL=https://example.invalid/ios-os
+IOS_OS_PASSWORD=test-ios-os-password
+ANDROID_CN_URL=https://example.invalid/android-cn
+ANDROID_CN_PASSWORD=test-android-cn-password
+ANDROID_OS_URL=https://example.invalid/android-os
+ANDROID_OS_PASSWORD=test-android-os-password

@@ -1,0 +1,10 @@
+# iOS job 登记（随 skill 分发；凭据另见 env/ios.env，不要写在这里）
+# 脚本白名单与别名都从本文件读取：改 job 名只改这里和 platforms/ios.md。
+# Jenkins：https://jenkins-ios.ninebot.com
+
+# 企业签测试包（机器人可 trigger）
+IOS_JOB_ENTERPRISE=v6-Enterprise-2
+# 国内打包 job（每日 develop；定时 + 人工触发；机器人只查询）别名：cn / 国内
+IOS_JOB_CN=ninebot-iOS-v6-Develop
+# 海外打包 job（每日 develop 海外；机器人只查询）别名：os / overseas / 海外
+IOS_JOB_OS=ninebot-iOS-v6-Develop-Overseas
