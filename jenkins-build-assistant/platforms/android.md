@@ -1,13 +1,13 @@
 # Android 打包
 
-由主 skill 按路径读取。安全约束在主 `SKILL.md`。脚本是 `scripts/android.sh`（只查询，不触发），凭据在 `env/android.env`，job 登记在 `platforms/android.jobs`。
+由主 skill 按路径读取。安全约束在主 `SKILL.md`。脚本是 `scripts/android.sh`（只查询，不触发），凭据在本机状态目录的 `env/android.env`（见 README「配置」），job 登记在 `platforms/android.jobs`。
 
 每日包：用户要安卓最新包时，执行 `scripts/android.sh channels`（键：`ANDROID_CN_URL`、`ANDROID_CN_PASSWORD`、`ANDROID_OS_URL`、`ANDROID_OS_PASSWORD`）。密码默认不展示，确认需要时 `channels password`。每日包主动推送由挂载层定时执行 `android.sh daily`。
 
 ## Jenkins
 
-- 地址：`https://jenkins.ninebot.com`（主 Jenkins，与鸿蒙共用；2026-10-20 Remote API 已打通，`env/android.env` 可查询）
-- 凭据：本 skill 的 `env/android.env`（与 `env/harmony.env` 相同的机器人账号 / API Token，不是个人邮箱开机密码）
+- 地址：`https://jenkins.ninebot.com`（主 Jenkins，与鸿蒙共用；2026-10-20 Remote API 已打通，本机 `env/android.env` 可查询）
+- 凭据：本机状态目录的 `env/android.env`（与 `env/harmony.env` 相同的机器人账号 / API Token，不是个人邮箱开机密码）
 - 每日测试包由 `baseline` 分支在凌晨自动打并上传蒲公英；链接和密码在 `env/channels`
 
 ## Job（登记在 `platforms/android.jobs`）
@@ -22,6 +22,7 @@
 
 - 2026-10-20 用户更正：海外 job 是 `ninebot-android-海外-v6`，不是 `ninebot-android-海外-develop分支`（后者没有任何构建记录，默认版本还是 5.9.0）。
 - `trigger` 一律拒绝：Android 测试包参数里带发布平台账号（`fabu_user_name` / `fabu_user_password` / `fabu_teamId`）与加固开关，由人在 Jenkins 上触发。要让机器人触发需先定参数白名单与默认值。
+- `android.sh params` 只说明人工触发、无可选参数；白名单为空，`status`/`latest`/`wait-build` 结果里不回显任何构建参数，避免带出 `fabu_*` 发布账号。
 
 ## 参数（2026-10-20 从 job 配置核对，仅供看懂构建）
 

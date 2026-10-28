@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: asks-platform-for-rn-package
+expected_outcome: |
+  用户没有指明平台，先问是 iOS 还是鸿蒙，并说明 Android 包由人在 Jenkins 上触发。不执行任何 trigger。

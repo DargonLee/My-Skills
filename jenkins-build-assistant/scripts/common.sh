@@ -5,14 +5,19 @@ if [ "${BASH_SOURCE[0]}" = "$0" ]; then
   exit 2
 fi
 
-if [ -z "${CHANNELS_FILE:-}" ]; then
-  _COMMON_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  CHANNELS_FILE="$(cd "$_COMMON_DIR/.." && pwd)/env/channels"
+# 本机状态（凭据 env/、渠道 env/channels、审计 logs/）默认放在 skill 目录之外，
+# 这样无论怎么打包 skill 都不会带出凭据。定位顺序：
+#   $JENKINS_SKILL_HOME > ~/.config/jenkins-build-assistant > <skill 根目录>（旧位置，仅作兼容）
+_COMMON_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -n "${JENKINS_SKILL_HOME:-}" ]; then
+  STATE_DIR="$JENKINS_SKILL_HOME"
+elif [ -d "${HOME:-/nonexistent}/.config/jenkins-build-assistant" ]; then
+  STATE_DIR="$HOME/.config/jenkins-build-assistant"
+else
+  STATE_DIR="$(cd "$_COMMON_DIR/.." && pwd)"
 fi
-if [ -z "${AUDIT_FILE:-}" ]; then
-  _AUDIT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-  AUDIT_FILE="$_AUDIT_DIR/logs/audit.log"
-fi
+CHANNELS_FILE="${CHANNELS_FILE:-$STATE_DIR/env/channels}"
+AUDIT_FILE="${AUDIT_FILE:-$STATE_DIR/logs/audit.log}"
 COOKIE_JAR="$(mktemp)"
 API_STATUS_FILE="$(mktemp)"
 trap 'rm -f "$COOKIE_JAR" "$API_STATUS_FILE"' EXIT
@@ -385,8 +390,11 @@ print("链接: %s" % data.get("url"))
 '
   if [ -n "$building" ]; then
     queue_eta 2>/dev/null || true
-  elif [ -n "$result" ] && [ "$result" != "SUCCESS" ]; then
-    error_summary "$bnum"
+  else
+    [ -n "$result" ] && build_params_block "$bnum"
+    if [ -n "$result" ] && [ "$result" != "SUCCESS" ]; then
+      error_summary "$bnum"
+    fi
   fi
 }
 
@@ -394,6 +402,127 @@ show_trigger_by() {
   if [ -n "${JENKINS_TRIGGER_BY:-}" ]; then
     printf '触发人：%s\n' "$(printf '%s' "$JENKINS_TRIGGER_BY" | LC_ALL=C tr -d '[:cntrl:]')"
   fi
+}
+
+# 完成后回显「本次打包参数」：从 Jenkins 构建记录读取实际发送值，只输出平台白名单参数，
+# 凭据类参数名（account/password/fabuAccount/secret/token/crumb 等）一律过滤，取不到则静默跳过。
+build_params_block() {
+  local num="$1" path body
+  [ -n "$num" ] || return 0
+  [ -n "${PARAM_ALLOWLIST:-}" ] || return 0
+  path="$(job_path)"
+  body="$(api_get "/job/${path}/${num}/api/json?tree=actions[parameters[name,value]]" quiet)" || return 0
+  PARAM_ALLOWLIST="$PARAM_ALLOWLIST" python3 - "$body" <<'PY'
+import os, sys, json
+
+raw = sys.argv[1]
+try:
+    data = json.loads(raw)
+except Exception:
+    sys.exit(0)
+allow = {x for x in os.environ.get("PARAM_ALLOWLIST", "").split() if x}
+DENY = ("account", "password", "fabuaccount", "fabu_user_name", "fabu_user_password", "fabu_teamid", "secret", "token", "crumb", "apitoken")
+rows = []
+for action in data.get("actions", []) or []:
+    for p in action.get("parameters", []) or []:
+        name = p.get("name") or ""
+        low = name.lower()
+        if any(d in low for d in DENY):
+            continue
+        # 白名单为空（如 Android 只查询）时一律不回显，避免带出发布平台账号等敏感参数
+        if not allow or name not in allow:
+            continue
+        value = p.get("value")
+        if value is None:
+            continue
+        if isinstance(value, bool):
+            value = "true" if value else "false"
+        value = str(value).replace("\r", " ").replace("\n", " ").strip()
+        rows.append((name, value))
+# 去重，保持 Jenkins 返回顺序
+seen = set()
+out = []
+for name, value in rows:
+    if name in seen:
+        continue
+    seen.add(name)
+    out.append((name, value))
+if out:
+    print("本次打包参数（Jenkins 记录）：")
+    for name, value in out:
+        print("  %s=%s" % (name, value))
+PY
+}
+
+# params live：从 job 的 parameterDefinitions 读取实时候选（分支、版本、开关选项），
+# 只展示平台白名单参数；获取失败时回退本地清单。
+cmd_params_live() {
+  load_creds
+  local path body parsed
+  path="$(job_path)"
+  if ! body="$(api_get "/job/${path}/api/json?tree=property[parameterDefinitions[name,defaultParameterValue[value],choices,type]]" quiet)"; then
+    echo "实时定义获取失败；请按上方本地清单选择。"
+    return 0
+  fi
+  if ! parsed="$(PARAM_ALLOWLIST="$PARAM_ALLOWLIST" python3 - "$body" <<'PY'
+import os, sys, json
+
+try:
+    data = json.loads(sys.argv[1])
+except Exception:
+    sys.exit(1)
+if not isinstance(data, dict):
+    sys.exit(1)
+allow = {x for x in os.environ.get("PARAM_ALLOWLIST", "").split() if x}
+defs = []
+for prop in data.get("property", []) or []:
+    for p in prop.get("parameterDefinitions", []) or []:
+        name = p.get("name") or ""
+        if not allow or name not in allow:
+            continue
+        default = (p.get("defaultParameterValue") or {}).get("value")
+        choices = p.get("choices") or []
+        defs.append((name, default, choices, p.get("type") or ""))
+if not defs:
+    sys.exit(1)
+def display(value):
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    return str(value).replace("\r", " ").replace("\n", " ")
+for name, default, choices, ptype in defs:
+    line = "- %s" % name
+    if name == "main_version":
+        line += "（脚本必填"
+        if default is not None and display(default) != "":
+            line += "；Jenkins 预设 %s" % display(default)
+        line += "）"
+    elif default is not None and display(default) != "":
+        line += "（Jenkins 默认 %s）" % display(default)
+    if choices:
+        line += "：%s" % " / ".join(display(c) for c in choices)
+    elif ptype == "BooleanParameterDefinition":
+        line += "：true / false"
+    elif ptype.startswith("PT_"):
+        line += "：Jenkins API 未提供候选值"
+    else:
+        line += "：自由输入"
+    print(line)
+PY
+ )"; then
+    echo "实时定义解析失败或没有可用参数；请按上方本地清单选择。"
+    return 0
+  fi
+  echo "Jenkins 实时候选（JOB=${JOB}；脚本触发限制以上方本地清单为准）："
+  printf '%s\n' "$parsed"
+}
+
+cmd_params() {
+  require_job trigger
+  case "${1:-}" in
+    ''|local) param_manifest_local ;;
+    live) param_manifest_local; echo; cmd_params_live ;;
+    *) die "params 只接受 local 或 live" ;;
+  esac
 }
 
 audit_log() {
@@ -841,6 +970,7 @@ if duration:
 print("链接: %s" % data.get("url"))
 ' || die "构建 #${num} 的结果无法解析"
   show_trigger_by
+  build_params_block "$num"
   if [ "$result" = "SUCCESS" ]; then
     arts="$(artifact_info "$num")"
     printf '%s\n' "$arts"
@@ -1002,6 +1132,7 @@ print(round(duration / 60000.0, 1) if duration else "")')"
   if [ -n "$dur" ] && [ "$dur" != "0" ] && [ "$dur" != "0.0" ]; then
     echo "耗时: ${dur} 分钟"
   fi
+  build_params_block "$num"
   artifact_info "$num"
 }
 

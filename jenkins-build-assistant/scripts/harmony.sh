@@ -1,5 +1,5 @@
 #!/bin/bash
-# HarmonyOS Jenkins. Credentials: <skill>/env/harmony.env
+# HarmonyOS Jenkins. Credentials: $STATE_DIR/env/harmony.env (see common.sh)
 # Shared HTTP lives in common.sh. Job rules and parameters stay here.
 set -euo pipefail
 
@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 HARMONY_BASE="https://jenkins.ninebot.com"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-ENV_FILE="${JENKINS_ENV:-$SKILL_DIR/env/harmony.env}"
+ENV_FILE="${JENKINS_ENV:-$STATE_DIR/env/harmony.env}"
 EXPECTED_BASE="$HARMONY_BASE"
 load_env_file "$ENV_FILE"
 load_jobs_file "$SKILL_DIR/platforms/harmony.jobs" HARMONY_JOB_AGC HARMONY_JOB_HAP HARMONY_JOB_HAP_DEVELOP HARMONY_JOB_HAP_SIGNER
@@ -36,6 +36,29 @@ auto_submit=true
 distribute_mode=1
 EOF
 )"
+
+# 完成后回显与 params 展示的参数白名单；凭据类参数永远不在其中。
+PARAM_ALLOWLIST="products main_version branch kuikly_branch_name build_version rn_branch_name app_desc auto_submit distribute_mode"
+
+param_manifest_local() {
+  cat <<EOF
+可触发 job：${HARMONY_JOB_AGC}（别名 agc/鸿蒙，默认）
+可查询 job：${HARMONY_JOB_HAP}、${HARMONY_JOB_HAP_DEVELOP}、${HARMONY_JOB_HAP_SIGNER}（只查询、取消排队）。
+
+触发参数（未指定走默认；开发者逐项选择后，复述完整生效参数再 confirm）：
+- main_version：必填，版本号（实时清单 params live 给 Jenkins 当前候选）
+- products：默认 default-prod（测试环境）；online-prod 生产环境由人在 Jenkins 触发
+- branch：默认 develop；常见 develop / release，或直接输入 feature 分支名（实时清单：params live）
+- kuikly_branch_name：默认 develop；kuikly 工程分支（当前候选只有 develop）
+- build_version：默认不发送，留空由打包机计数器递增；填写须为 1-4 位数字
+- rn_branch_name：默认不发送，留空不改 RN 模块分支；需要时填 RN 分支名
+- app_desc：默认 jenkins；邀请测试版本说明（自由输入）
+- auto_submit：默认 true；可选 true / false（false 只打包不提交 AGC 邀请测试审核）
+- distribute_mode：默认 1（仅测试）；2 应用市场由人在 Jenkins 触发
+
+查看 Jenkins 实时候选分支 / 版本 / 选项：harmony.sh params live
+EOF
+}
 
 job_scope() {
   if [ "$1" = "$HARMONY_JOB_AGC" ]; then
@@ -92,6 +115,7 @@ usage() {
 凭据: env/harmony.env    job 登记: platforms/harmony.jobs
 JOB 环境变量可用 job 名或别名：agc（默认，ninebot-harmony-agc）
 
+  params [live]                        触发前可选参数清单（local 本地默认；live 拉 Jenkins 实时候选）
   trigger <main_version> confirm [force] [k=v]  触发 ninebot-harmony-agc（须 confirm；构建进行中时需 force）
   wait-build queue <排队号>            等到该排队项对应的构建结束
   wait-build <构建号>                  等到这一次构建结束
@@ -207,6 +231,10 @@ CMD="${1:-}"
 case "$CMD" in
   channels|daily)
     die "鸿蒙没有每日包渠道。iOS / Android 渠道用 ios.sh / android.sh 的 channels"
+    ;;
+  params)
+    [ "$#" -le 2 ] || die "params 最多接受 local / live"
+    shift; cmd_params "$@"
     ;;
   trigger) shift; cmd_trigger "$@" ;;
   wait-build) shift; cmd_wait_build "$@" ;;

@@ -5,7 +5,7 @@
 ## Jenkins
 
 - 地址：`https://jenkins-ios.ninebot.com`（Remote API 已打通，2026-10-12）
-- 凭据：本 skill 的 `env/ios.env`。`JENKINS_USER` 是 Jenkins 用户 id，不是 API Token 的名称。
+- 凭据：本机状态目录的 `env/ios.env`（见 README「配置」）。`JENKINS_USER` 是 Jenkins 用户 id，不是 API Token 的名称。
 - 构建机只有 1 台旧 Mac，队列常见
 
 ## Job（登记在 `platforms/ios.jobs`）
@@ -46,7 +46,14 @@
 
 脚本仅接受本表参数，以及这些额外参数名：`RNProjectBranch`、`rnEnv`、`rnBranchName`、`dynamicBranchName`、`team_id_info`、`PgyerChannel`、`progressTime`；额外参数的值原样传给 Jenkins。未知参数名、带换行符的值，以及 `account`、`password`、`fabuAccount`（不区分大小写）都会被脚本拒绝。
 
-`Service_Key` 和 `main_version` 的可选项在构建机 `/Users/ninebot/ninebot/IPAPackage/Shell/jenkins_config.properties`（`app_env` / `versions`）。Remote API 不返回这些选项，传入后由 Jenkins 校验。
+`ios.sh params live` 先显示脚本本地默认值和限制，再从 Jenkins `parameterDefinitions` 拉取 branch、Confusion、env、channel、Xcode 等全部实时候选；只适用于可触发的 Enterprise job。Jenkins 默认值不等于脚本默认值，候选项也不一定获脚本放行。`Service_Key`、`main_version` 的单选/版本清单不在 API `choices` 字段，脚本只放行 dev/test，版本号必须显式给出并由 Jenkins 校验（完整 app_env / versions 仍见构建机 `jenkins_config.properties`）。
+
+触发前先让开发者主动选择分支与参数：
+
+```bash
+bash ROOT/scripts/ios.sh params          # 离线清单：job 别名、每个参数的默认值与可选值
+bash ROOT/scripts/ios.sh params live     # 拉 Jenkins 实时候选分支/版本/选项（只列白名单参数）
+```
 
 用户确认后的触发示例（`ROOT` 为本 skill 根目录）：
 
@@ -61,6 +68,7 @@ JOB=os bash ROOT/scripts/ios.sh status               # 海外每日 job
 
 - 已有构建进行中/排队时，`trigger` 默认拒绝并提示，用户明确要求再打一个时才加 `force`：`trigger 6.10.12 confirm force`。
 - 触发时未指定的参数全部走上表默认值，脚本会先输出「本次打包参数」完整清单再触发；用户要改默认值直接加 `key=value`，如 `trigger 6.10.12 confirm env=海外 BuildConfiguration=Release`。
+- `wait-build`/`status`/`latest` 完成后会从 Jenkins 记录带出「本次打包参数（Jenkins 记录）」，展示这次构建实际发送的白名单参数（branch、Service_Key、main_version、env 等真实值）；`account`/`password`/`fabuAccount` 等凭据类参数一律不显示。
 - 构建完成的主动通知由冯宝宝编排：触发时记录发起者 → 经 `JENKINS_TRIGGER_BY` 透传 → 用回执里的排队号轮询 `wait-build queue <排队号>`（已有构建号则 `wait-build <构建号>`）→ 把这一次的构建版本号（#N）+状态+耗时+蒲公英地址 定向回复发起者。
 - 每日包：`channels` 默认只给链接，需要密码时 `channels password`；挂载层每天定时 `daily` 推送渠道与更新说明。
 - 构建失败时 `status` / `wait-build` 会附失败步骤、最多 5 条关键报错和可用的提交信息（脱敏），直接转述关键原因即可。

@@ -6,6 +6,7 @@ TMP_DIR="$(mktemp -d)"
 trap 'rm -rf "$TMP_DIR"' EXIT
 
 export CHANNELS_FILE="$ROOT/tests/fixtures/channels"
+export JENKINS_SKILL_HOME="$TMP_DIR/state"
 export JENKINS_ENV="$TMP_DIR/empty.env"
 export CURL_MARKER="$TMP_DIR/curl-called"
 export PATH="$ROOT/tests/fixtures/bin:$PATH"
@@ -100,6 +101,17 @@ output="$(bash "$ROOT/scripts/jenkins_build.sh" android channels)"
 expect_contains "$output" "https://example.invalid/android-cn"
 echo "PASS: legacy entry still routes Android channels"
 
+mkdir -p "$TMP_DIR/state/env"
+cat > "$TMP_DIR/state/env/channels" <<'EOF'
+IOS_CN_URL=https://example.invalid/state-ios-cn
+IOS_CN_PASSWORD=state-password
+IOS_OS_URL=https://example.invalid/state-ios-os
+IOS_OS_PASSWORD=state-password
+EOF
+output="$(env -u CHANNELS_FILE bash "$ROOT/scripts/ios.sh" channels)"
+expect_contains "$output" "https://example.invalid/state-ios-cn"
+echo "PASS: local state (env/channels) resolves from JENKINS_SKILL_HOME, outside the skill directory"
+
 expect_reject "reject extra iOS channel arguments" "channels 参数过多" \
   bash "$ROOT/scripts/ios.sh" channels password extra
 expect_reject "reject extra Android channel arguments" "channels 最多接受 password" \
@@ -193,6 +205,32 @@ expect_reject "reject line breaks in Harmony trigger parameters" "参数 app_des
 expect_reject "reject invalid Harmony submission switch" "auto_submit 只接受 true 或 false" \
   bash "$ROOT/scripts/harmony.sh" trigger 6.10.13 confirm auto_submit=maybe
 
+# ---- params 本地清单：不触网，列出可选参数与默认值供开发者主动选择 ----
+output="$(bash "$ROOT/scripts/ios.sh" params)"
+expect_contains "$output" "Service_Key"
+expect_contains "$output" "branch：默认 develop"
+expect_contains "$output" "env：默认 国内"
+expect_not_contains "$output" "fabuAccount"
+echo "PASS: iOS local params list shows selectable parameters and defaults"
+
+output="$(bash "$ROOT/scripts/harmony.sh" params)"
+expect_contains "$output" "products：默认 default-prod"
+expect_contains "$output" "auto_submit：默认 true"
+echo "PASS: Harmony local params list shows selectable parameters and defaults"
+
+output="$(bash "$ROOT/scripts/android.sh" params)"
+expect_contains "$output" "人工在 Jenkins 上触发"
+echo "PASS: Android params states human-triggered, no parameter choices"
+
+expect_reject "reject invalid params mode" "params 只接受 local 或 live" \
+  bash "$ROOT/scripts/ios.sh" params bogus
+expect_reject "reject extra android params arguments" "params 不接受参数" \
+  bash "$ROOT/scripts/android.sh" params live
+expect_reject "reject params for query-only iOS job" "不能由机器人触发" \
+  env JOB=cn bash "$ROOT/scripts/ios.sh" params
+expect_reject "reject params for query-only Harmony job" "不能由机器人触发" \
+  env JOB=ninebot-hap bash "$ROOT/scripts/harmony.sh" params
+
 if [ -e "$CURL_MARKER" ]; then
   fail "a guarded local command attempted to call curl"
 fi
@@ -276,6 +314,60 @@ output="$(bash "$ROOT/scripts/ios.sh" wait-build queue 78)"
 expect_contains "$output" "构建 #2040"
 expect_contains "$output" "状态: SUCCESS"
 echo "PASS: explicit build and expired queue id bind to the right build"
+
+# ---- 完成后回显本次打包入参：只出白名单项，凭据类参数被过滤 ----
+output="$(MOCK_SCENARIO=success bash "$ROOT/scripts/ios.sh" wait-build 2040)"
+expect_contains "$output" "本次打包参数（Jenkins 记录）"
+expect_contains "$output" "branch=develop"
+expect_contains "$output" "Service_Key=test"
+expect_contains "$output" "main_version=6.10.12"
+expect_contains "$output" "rnEnv="
+expect_not_contains "$output" "ninebot-newarch"
+expect_not_contains "$output" "fabuAccount"
+expect_not_contains "$output" "password="
+echo "PASS: wait-build echoes recorded trigger parameters and redacts credential-like ones"
+
+output="$(MOCK_SCENARIO=success bash "$ROOT/scripts/ios.sh" status 2040)"
+expect_contains "$output" "本次打包参数（Jenkins 记录）"
+expect_contains "$output" "branch=develop"
+expect_not_contains "$output" "ninebot-newarch"
+echo "PASS: status echoes recorded trigger parameters for a finished build"
+
+output="$(MOCK_SCENARIO=success bash "$ROOT/scripts/ios.sh" latest)"
+expect_contains "$output" "本次打包参数（Jenkins 记录）"
+expect_contains "$output" "main_version=6.10.12"
+expect_not_contains "$output" "ninebot-newarch"
+echo "PASS: latest echoes recorded trigger parameters"
+
+# ---- params live：拉 Jenkins 实时候选分支/版本/选项，只展示白名单参数 ----
+output="$(MOCK_SCENARIO=success bash "$ROOT/scripts/ios.sh" params live)"
+expect_contains "$output" "Service_Key：默认 test；可选 dev / test"
+expect_contains "$output" "Jenkins 实时候选"
+expect_contains "$output" "Service_Key：Jenkins API 未提供候选值"
+expect_contains "$output" "develop / release / feat/demo"
+expect_contains "$output" "feat/last"
+expect_contains "$output" "国内 / 海外"
+expect_not_contains "$output" "fabuAccount"
+expect_not_contains "$output" "password=do-not-print"
+echo "PASS: iOS params live lists live choices for whitelisted parameters"
+
+output="$(MOCK_SCENARIO=success JENKINS_BASE=https://jenkins.ninebot.com bash "$ROOT/scripts/harmony.sh" params live)"
+expect_contains "$output" "Jenkins 实时候选"
+expect_contains "$output" "default-prod / online-prod"
+expect_contains "$output" "6.10.13 / 6.10.12"
+expect_contains "$output" "main_version（脚本必填；Jenkins 预设 6.10.13）"
+expect_contains "$output" "auto_submit（Jenkins 默认 true）：true / false"
+expect_contains "$output" "online-prod 生产环境由人在 Jenkins 触发"
+echo "PASS: Harmony params live lists live choices for whitelisted parameters"
+
+# params live 返回坏数据或空定义时保留本地清单，不报错退出
+output="$(MOCK_SCENARIO=malformed_params bash "$ROOT/scripts/ios.sh" params live)"
+expect_contains "$output" "实时定义解析失败或没有可用参数"
+expect_contains "$output" "触发参数（未指定走默认"
+output="$(MOCK_SCENARIO=empty_params bash "$ROOT/scripts/ios.sh" params live)"
+expect_contains "$output" "实时定义解析失败或没有可用参数"
+expect_contains "$output" "触发参数（未指定走默认"
+echo "PASS: params live retains the local manifest when definitions are unusable"
 
 # ---- 本机 macOS 通知（JENKINS_NOTIFY=1；osascript/terminal-notifier 都打到 stub）----
 export NOTIFY_CALLS_FILE="$TMP_DIR/notify"
@@ -399,12 +491,16 @@ expect_contains "$output" "最近成功构建：#343"
 expect_contains "$output" "产物信息暂不可用。构建页："
 echo "PASS: Harmony latest extracts AGC share link and versionCode, with fallback"
 
-output="$(bash "$ROOT/scripts/harmony.sh" wait-build 343)"
+output="$(MOCK_SCENARIO=success bash "$ROOT/scripts/harmony.sh" wait-build 343)"
 expect_contains "$output" "构建 #343"
 expect_contains "$output" "状态: SUCCESS"
 expect_contains "$output" "邀请测试链接："
 expect_not_contains "$output" "失败分析"
-echo "PASS: Harmony wait-build reports AGC artifact info"
+expect_contains "$output" "本次打包参数（Jenkins 记录）"
+expect_contains "$output" "products=default-prod"
+expect_contains "$output" "branch=develop"
+expect_contains "$output" "auto_submit=true"
+echo "PASS: Harmony wait-build echoes recorded trigger parameters"
 
 : > "$MOCK_CALLS_FILE"
 : > "$AUDIT_FILE"
@@ -460,11 +556,19 @@ expect_contains "$output" "最近成功构建：#1277"
 expect_contains "$output" "产物信息暂不可用。构建页："
 echo "PASS: Android latest extracts APK name and the no-upload note"
 
+: > "$MOCK_CALLS_FILE"
 output="$(bash "$ROOT/scripts/android.sh" wait-build 1277)"
 expect_contains "$output" "构建 #1277"
 expect_contains "$output" "状态: SUCCESS"
 expect_contains "$output" "产物："
-echo "PASS: Android wait-build reports APK artifact info"
+expect_not_contains "$output" "本次打包参数"
+expect_not_contains "$output" "fabu_user_name"
+expect_not_contains "$output" "should-not-echo"
+expect_not_contains "$output" "secret"
+if rg -q -F 'actions[parameters' "$MOCK_CALLS_FILE"; then
+  fail "Android queried build parameters despite its empty allowlist"
+fi
+echo "PASS: Android wait-build never echoes build parameters (human-triggered)"
 
 output="$(env JOB=os bash "$ROOT/scripts/android.sh" status)"
 expect_contains "$output" "构建 #1895"

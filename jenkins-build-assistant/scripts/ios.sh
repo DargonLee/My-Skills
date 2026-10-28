@@ -1,5 +1,5 @@
 #!/bin/bash
-# iOS Jenkins. Credentials: <skill>/env/ios.env
+# iOS Jenkins. Credentials: $STATE_DIR/env/ios.env (see common.sh)
 # Shared HTTP lives in common.sh. Job rules and parameters stay here.
 set -euo pipefail
 
@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 IOS_BASE="https://jenkins-ios.ninebot.com"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-ENV_FILE="${JENKINS_ENV:-$SKILL_DIR/env/ios.env}"
+ENV_FILE="${JENKINS_ENV:-$STATE_DIR/env/ios.env}"
 EXPECTED_BASE="$IOS_BASE"
 load_env_file "$ENV_FILE"
 load_jobs_file "$SKILL_DIR/platforms/ios.jobs" IOS_JOB_ENTERPRISE IOS_JOB_CN IOS_JOB_OS
@@ -42,6 +42,33 @@ ShopDebug=0
 EOF
 )"
 
+# 完成后回显与 params 展示的参数白名单；account/password/fabuAccount 等凭据类永远不在其中。
+PARAM_ALLOWLIST="Service_Key main_version branch env BuildConfiguration channel Confusion Xcode needUpload watermark needUpdateStringPackage ShopDebug RNProjectBranch rnEnv rnBranchName dynamicBranchName team_id_info PgyerChannel progressTime"
+
+param_manifest_local() {
+  cat <<EOF
+可触发 job：${IOS_JOB_ENTERPRISE}（别名 enterprise，默认）
+可查询 job：${IOS_JOB_CN}（cn/国内）、${IOS_JOB_OS}（os/海外）；发版 / TestFlight job 由人在 Jenkins 触发。
+
+触发参数（未指定走默认；开发者逐项选择后，复述完整生效参数再 confirm）：
+- Service_Key：默认 test；可选 dev / test（release / migrate_cloud / production 人工触发）
+- main_version：必填，版本号自由输入（错误值 Jenkins 会拒绝）
+- branch：默认 develop；常见 develop / release，或直接输入 feature 分支名（实时清单：params live）
+- env：默认 国内；可选 国内 / 海外
+- BuildConfiguration：默认 Debug；可选 Debug / Release
+- channel：默认 Release；可选 Develop / Release（Develop 时 RN 显示 R debug 按钮）
+- Confusion：默认 无；可选 易盾加固 / 无
+- Xcode：默认 26；可选 26 / 27 / 16
+- needUpload：默认 No；可选 Yes / No（当前 job 已无蒲公英上传步骤）
+- watermark：默认 false；可选 true / false（水印）
+- needUpdateStringPackage：默认 No；可选 Yes / No（服务端无对应文案版本会失败）
+- ShopDebug：默认 0；商城调试按钮（数字）
+- 高级（默认留空，需要才填）：RNProjectBranch、rnEnv、rnBranchName、dynamicBranchName、team_id_info、PgyerChannel、progressTime
+
+查看 Jenkins 实时候选分支 / 版本 / 选项：ios.sh params live
+EOF
+}
+
 job_scope() {
   if [ "$1" = "$IOS_JOB_ENTERPRISE" ]; then
     printf 'trigger'
@@ -72,6 +99,7 @@ JOB 环境变量可用 job 名或别名：enterprise（默认，v6-Enterprise-2�
 
   channels [password]                  每日包链接（默认不显示密码；password 才输出密码）
   daily                                每日包主动推送检查入口（挂载层每天定时调用）
+  params [live]                        触发前可选参数清单（local 本地默认；live 拉 Jenkins 实时候选）
   trigger <main_version> confirm [force] [k=v]  触发 v6-Enterprise-2（须 confirm；构建进行中时需 force）
   wait-build queue <排队号>            等到该排队项对应的构建结束
   wait-build <构建号>                  等到这一次构建结束
@@ -193,6 +221,10 @@ case "$CMD" in
   daily)
     [ "$#" -eq 1 ] || die "daily 不接受参数"
     cmd_daily
+    ;;
+  params)
+    [ "$#" -le 2 ] || die "params 最多接受 local / live"
+    shift; cmd_params "$@"
     ;;
   trigger) shift; cmd_trigger "$@" ;;
   wait-build) shift; cmd_wait_build "$@" ;;

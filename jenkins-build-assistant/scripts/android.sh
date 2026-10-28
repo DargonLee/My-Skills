@@ -1,5 +1,5 @@
 #!/bin/bash
-# Android Jenkins (query only). Credentials: <skill>/env/android.env
+# Android Jenkins (query only). Credentials: $STATE_DIR/env/android.env (see common.sh)
 # Shared HTTP lives in common.sh. Job rules stay here. Trigger is left to humans.
 set -euo pipefail
 
@@ -9,7 +9,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 ANDROID_BASE="https://jenkins.ninebot.com"
 SKILL_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
-ENV_FILE="${JENKINS_ENV:-$SKILL_DIR/env/android.env}"
+ENV_FILE="${JENKINS_ENV:-$STATE_DIR/env/android.env}"
 EXPECTED_BASE="$ANDROID_BASE"
 load_env_file "$ENV_FILE"
 load_jobs_file "$SKILL_DIR/platforms/android.jobs" ANDROID_JOB_CN ANDROID_JOB_OS
@@ -24,6 +24,21 @@ resolve_job() {
   esac
 }
 JOB="$(resolve_job "${JOB:-}")"
+
+# Android 只查询不触发：白名单留空，完成结果不回显任何构建参数（含 fabu_* 发布账号）。
+PARAM_ALLOWLIST=""
+
+param_manifest_local() {
+  cat <<EOF
+Android 打包由人工在 Jenkins 上触发，机器人只查询（status / latest / log / wait-build / cancel），没有 trigger 与参数选择。
+
+可查询 job：
+- ${ANDROID_JOB_CN}（cn/国内，默认）
+- ${ANDROID_JOB_OS}（os/海外）
+
+每日包链接：android.sh channels（密码默认不展示，需要时 channels password）。
+EOF
+}
 
 job_scope() {
   if [ "$1" = "$ANDROID_JOB_CN" ] || [ "$1" = "$ANDROID_JOB_OS" ]; then
@@ -85,6 +100,7 @@ JOB 环境变量可用 job 名或别名：cn（默认，国内）/ os（海外�
 
   channels [password]                  每日包链接（默认不显示密码；password 才输出密码）
   daily                                每日包主动推送检查入口（挂载层每天定时调用）
+  params                               说明：Android 人工触发，机器人只查询，无参数可选
   status [构建号]                      查询构建状态
   latest                               该 job 最近成功构建和产物信息
   wait-build queue <排队号> | <构建号> | （空）  等待构建结束，合同与 ios.sh 相同
@@ -112,6 +128,10 @@ case "$CMD" in
   daily)
     [ "$#" -eq 1 ] || die "daily 不接受参数"
     cmd_daily
+    ;;
+  params)
+    [ "$#" -eq 1 ] || die "params 不接受参数（Android 人工触发，无参数可选）"
+    param_manifest_local
     ;;
   trigger) die "$(job_trigger_denied_message)" ;;
   wait-build) shift; cmd_wait_build "$@" ;;

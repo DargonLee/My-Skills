@@ -43,6 +43,26 @@ fi
 case "$path" in
   /crumbIssuer/api/json)
     body='{"crumb":"fixture-crumb"}' ;;
+  # ---- 构建实际参数记录（actions[parameters]）：含凭据类参数用于验证过滤；通配符匹配 tree ----
+  "$job"/2040/api/json*actions*)
+    body='{"actions":[{"parameters":[{"name":"Service_Key","value":"test"},{"name":"main_version","value":"6.10.12"},{"name":"branch","value":"develop"},{"name":"env","value":"国内"},{"name":"BuildConfiguration","value":"Debug"},{"name":"channel","value":"Release"},{"name":"Confusion","value":"无"},{"name":"Xcode","value":"26"},{"name":"needUpload","value":"No"},{"name":"watermark","value":false},{"name":"needUpdateStringPackage","value":"No"},{"name":"ShopDebug","value":"0"},{"name":"rnEnv","value":""},{"name":"fabuAccount","value":"ninebot-newarch"},{"name":"account","value":""},{"name":"password","value":null}]}]}' ;;
+  "$job"/2041/api/json*actions*)
+    body='{"actions":[{"parameters":[{"name":"Service_Key","value":"test"},{"name":"main_version","value":"6.10.12"},{"name":"branch","value":"develop"},{"name":"password","value":null}]}]}' ;;
+  "$hjob"/343/api/json*actions*)
+    body='{"actions":[{"parameters":[{"name":"products","value":"default-prod"},{"name":"branch","value":"develop"},{"name":"main_version","value":"6.10.13"},{"name":"kuikly_branch_name","value":"develop"},{"name":"app_desc","value":"jenkins"},{"name":"auto_submit","value":true},{"name":"distribute_mode","value":"1"}]}]}' ;;
+  "$ajob"/1277/api/json*actions*)
+    body='{"actions":[{"parameters":[{"name":"branch","value":"baseline"},{"name":"main_version","value":"6.10.13"},{"name":"fabu_user_name","value":"should-not-echo"},{"name":"fabu_user_password","value":"secret"}]}]}' ;;
+  "$aos"/1895/api/json*actions*)
+    body='{"actions":[{"parameters":[{"name":"branch","value":"baseline"},{"name":"fabu_user_password","value":"secret"}]}]}' ;;
+  # ---- params live：job 参数定义与实时候选（通配符匹配 tree=property 请求）----
+  "$job"/api/json*property*)
+    case "$MOCK_SCENARIO" in
+      malformed_params) body='not-json' ;;
+      empty_params) body='{"property":[]}' ;;
+      *) body='{"property":[{"_class":"hudson.model.ParametersDefinitionProperty","parameterDefinitions":[{"name":"Service_Key","type":"PT_SINGLE_SELECT","description":"dev/test"},{"name":"main_version","type":"PT_SINGLE_SELECT","description":"app主版本"},{"name":"branch","type":"ChoiceParameterDefinition","defaultParameterValue":{"value":"develop"},"choices":["develop","release","feat/demo","feat/4","feat/5","feat/6","feat/7","feat/8","feat/9","feat/10","feat/11","feat/12","feat/13","feat/14","feat/15","feat/last"],"description":"password=do-not-print"},{"name":"env","type":"ChoiceParameterDefinition","defaultParameterValue":{"value":"国内"},"choices":["国内","海外"]}]}]}' ;;
+    esac ;;
+  "$hjob"/api/json*property*)
+    body='{"property":[{"_class":"hudson.model.ParametersDefinitionProperty","parameterDefinitions":[{"name":"products","type":"ChoiceParameterDefinition","defaultParameterValue":{"value":"default-prod"},"choices":["default-prod","online-prod"]},{"name":"main_version","type":"ChoiceParameterDefinition","defaultParameterValue":{"value":"6.10.13"},"choices":["6.10.13","6.10.12"]},{"name":"branch","type":"ChoiceParameterDefinition","defaultParameterValue":{"value":"develop"},"choices":["develop","release"]},{"name":"auto_submit","type":"BooleanParameterDefinition","defaultParameterValue":{"value":true}}]}]}' ;;
   /queue/api/json\?tree=items\[id,task\[name\]\]|/queue/api/json\?tree=items\[id,why,task\[name\]\])
     case "$MOCK_SCENARIO" in
       queue|queue_and_running|cancel) body='{"items":[{"id":77,"task":{"name":"v6-Enterprise-2"},"why":"Waiting"}]}' ;;

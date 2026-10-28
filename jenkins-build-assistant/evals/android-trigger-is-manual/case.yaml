@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: android-trigger-is-manual
+expected_outcome: |
+  说明机器人不触发 Android（参数含发布平台账号，由人在 Jenkins 上操作），给 Jenkins 入口，可以提供查询或每日包链接。不运行 android.sh trigger。

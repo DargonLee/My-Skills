@@ -1,52 +1,67 @@
 # Jenkins 打包助手
 
-运行行为、安全约束和平台路由以 `SKILL.md` 为准。本目录当前包含 iOS 查询/触发脚本、HarmonyOS 邀请测试打包触发脚本、Android 查询脚本与每日包渠道查询；不包含 MCP 服务或 Jenkins CLI jar。
+运行行为、安全约束和平台路由以 `SKILL.md` 为准。本目录包含 iOS 查询/触发脚本、HarmonyOS 邀请测试打包触发脚本、Android 查询脚本与每日包渠道查询。
 
 ## 目录
 
 ```text
-SKILL.md
-README.md
-回归测试清单.md
-platforms/        平台现状、白名单和参数说明（*.md）+ 各平台 job 登记（*.jobs，随 skill 分发，不是凭据）
-scripts/          平台入口与共用 Jenkins API
-tests/            本地、禁止网络的回归测试
-env/              本机凭据和渠道配置，不得分发
-logs/             本机审计日志，不得分发
+SKILL.md           skill 入口：意图路由、打包流程、通知与安全规则
+README.md          面向维护者：配置、通知授权、回归测试、打包
+回归测试清单.md      人工线上验证记录
+platforms/         平台现状、白名单和参数说明（*.md）+ 各平台 job 登记（*.jobs，随 skill 分发，不是凭据）
+scripts/           平台入口与共用 Jenkins API
+tests/             本地、禁止网络的回归测试
+evals/             模型行为测试（触发与流程），格式见 skill-creator
 ```
 
-本目录的 `.gitignore` 排除 `env/` 和 `logs/`，避免本机凭据和审计记录被误提交。
+凭据、渠道密码和审计日志不在这个目录里，见下一节。
 
 ## 配置
 
-凭据放在本 skill 的 `env/`。`JENKINS_USER` 填 Jenkins 用户 id；iOS 上 API Token 的显示名不是用户名。
+本机状态默认放在 skill 目录之外的 `~/.config/jenkins-build-assistant/`，这样无论怎么打包或复制 skill，都不会带出凭据。脚本按这个顺序定位状态目录：
+
+1. 环境变量 `JENKINS_SKILL_HOME`
+2. `~/.config/jenkins-build-assistant/`（存在时）
+3. skill 根目录（旧位置，仅作兼容；新装请不要用）
+
+状态目录的结构：
+
+```text
+env/ios.env  env/harmony.env  env/android.env   Jenkins 凭据
+env/channels                                    每日包渠道链接与密码
+logs/audit.log                                  触发审计日志
+```
+
+`JENKINS_USER` 填 Jenkins 用户 id；iOS 上 API Token 的显示名不是用户名。
 
 ```bash
-ROOT=/path/to/jenkins-build-assistant
-mkdir -p "$ROOT/env"
-chmod 700 "$ROOT/env"
+STATE="$HOME/.config/jenkins-build-assistant"
+mkdir -p "$STATE/env"
+chmod 700 "$STATE" "$STATE/env"
 
-cat > "$ROOT/env/ios.env" <<'EOF'
+cat > "$STATE/env/ios.env" <<'EOF'
 JENKINS_USER=dev
 JENKINS_API_TOKEN=<API Token>
 JENKINS_BASE=https://jenkins-ios.ninebot.com
 EOF
-chmod 600 "$ROOT/env/ios.env"
+chmod 600 "$STATE/env/ios.env"
 
-cat > "$ROOT/env/channels" <<'EOF'
-IOS_CN_URL=<iOS domestic channel URL>
-IOS_CN_PASSWORD=<password>
-IOS_OS_URL=<iOS overseas channel URL>
-IOS_OS_PASSWORD=<password>
-ANDROID_CN_URL=<Android domestic channel URL>
-ANDROID_CN_PASSWORD=<password>
-ANDROID_OS_URL=<Android overseas channel URL>
-ANDROID_OS_PASSWORD=<password>
+cat > "$STATE/env/channels" <<'EOF'
+IOS_CN_URL=<iOS 国内渠道链接>
+IOS_CN_PASSWORD=<密码>
+IOS_OS_URL=<iOS 海外渠道链接>
+IOS_OS_PASSWORD=<密码>
+ANDROID_CN_URL=<Android 国内渠道链接>
+ANDROID_CN_PASSWORD=<密码>
+ANDROID_OS_URL=<Android 海外渠道链接>
+ANDROID_OS_PASSWORD=<密码>
 EOF
-chmod 600 "$ROOT/env/channels"
+chmod 600 "$STATE/env/channels"
 ```
 
-HarmonyOS and Android both use the main Jenkins `https://jenkins.ninebot.com` (`env/harmony.env`, `env/android.env`; same robot account / API Token). Job names live in `platforms/<platform>.jobs`, not in env files, so they ship with the skill. Do not put a personal account password in env files. Environment variables already exported by the caller take precedence over the matching values in platform env files.
+鸿蒙和 Android 使用主 Jenkins `https://jenkins.ninebot.com`（`env/harmony.env`、`env/android.env`，同一个机器人账号和 API Token）。job 名登记在 `platforms/<平台>.jobs`，不在 env 里，所以随 skill 分发。不要把个人账号密码写进 env 文件。调用方已经导出的环境变量优先于 env 文件里的同名值。
+
+另有 `JENKINS_ENV`，可直接指定某个平台的单个 env 文件（回归测试用它指向假凭据）。
 
 ## 构建完成的本机 macOS 通知（可选）
 
@@ -88,19 +103,23 @@ terminal-notifier -title "Jenkins 打包助手" -message "点击我" -open "http
 - 需在已登录的图形会话里运行（Terminal / VS Code / Codex 等都算）。SSH、无登录的守护进程里不会显示。
 - 系统设置列表里找不到这两个 App 时，说明还没发过通知，先跑第 1 步再刷新列表。
 
-## Local Regression Suite
+## 本地回归测试
 
-The suite exercises local guards, channel formatting, and synthetic Jenkins responses. It checks that its `curl` and notification stubs are executable and first on `PATH` before running anything; the `curl` stub has no network fallback and rejects unhandled requests. Run it manually with:
+套件用假凭据、假渠道数据和本地 `curl` stub 检查本地门禁、渠道输出格式和模拟的 Jenkins 响应。运行前它会确认 `curl` 与通知桩是可执行文件且在 `PATH` 最前，`curl` 桩没有联网回退，遇到未处理的请求直接失败。测试把状态目录指向临时目录，不会读写真实凭据和审计日志。手动运行：
 
 ```bash
 bash tests/regression.sh
 ```
 
-These checks do not replace the live Jenkins procedure recorded in `回归测试清单.md`.
+这些检查不能替代 `回归测试清单.md` 里记录的线上联调流程。
 
-## Packaging
+## 模型行为测试
 
-Build a skill archive from the runtime files only. Explicit inclusion keeps local credentials, logs, and development tests out of the archive:
+`evals/` 里的每个文件夹是一个用例（提示词 + 期望结果 + 评分项），检查模型在这个 skill 下是否按流程走：平台不明确先问、不跳过 `params` 和确认直接触发、越界参数拒绝等。格式见 skill-creator 的 `references/schemas.md`。
+
+## 打包
+
+用显式白名单打包运行时文件。`env/`、`logs/`、`tests/`、`evals/` 都不进包：
 
 ```bash
 ROOT=/path/to/jenkins-build-assistant
@@ -108,3 +127,5 @@ cd "$ROOT"
 stamp="$(date +%Y%m%d%H%M%S)"
 zip -r -X "../jenkins-build-assistant-${stamp}.zip" SKILL.md platforms scripts -x '*.DS_Store'
 ```
+
+用 skill-creator 的 `package_skill.py` 也可以，但它会按目录打包，先确认目录里没有本机数据。
