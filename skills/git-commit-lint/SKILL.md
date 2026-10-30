@@ -1,5 +1,5 @@
 ---
-name: git-commit
+name: git-commit-lint
 description: 智能分析工作区变更，读取项目 commitlint 规范生成合规提交信息并执行提交，自动处理 pre-commit 钩子失败。
 disable-model-invocation: true
 allowed-tools: Bash(git *), Bash(npx eslint *), Bash(npx prettier *), Read, Write, Edit

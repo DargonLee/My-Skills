@@ -1,5 +1,5 @@
 ---
-name: vapp-skill
+name: vapp-architecture
 description: VApp Native Bridge Runtime 架构文档。解释 VApp 的事件驱动 Native Bridge 设计，包括 TurboModule、NotificationCenter 分发、Protocol-oriented 服务查找。当用户提及 VApp、RN Bridge、Native Bridge、TurboModule、callNative 时自动触发。
 ---
 

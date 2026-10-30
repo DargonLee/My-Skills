@@ -1,5 +1,5 @@
 ---
-name: commit
+name: commit-workflow
 description: Git commit workflow with conventional format and comprehensive summaries
 ---
 

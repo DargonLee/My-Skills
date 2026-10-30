@@ -1,5 +1,5 @@
 ---
-name: docs-write
+name: write-docs
 description: Write documentation following Metabase's conversational, clear, and user-focused style. Use when creating or editing documentation files (markdown, MDX, etc.).
 allowed-tools: Read, Write, Grep, Bash, Glob
 ---
