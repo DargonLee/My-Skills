@@ -162,11 +162,13 @@ get_crumb() {
     "$JENKINS_BASE/crumbIssuer/api/json")" || {
     rm -f "$hf"
     echo "错误：无法连接 Jenkins" >&2
+    network_hint
     exit 1
   }
   if [ "$code" != "200" ]; then
     rm -f "$hf"
     echo "错误：获取 crumb 失败 HTTP ${code}" >&2
+    http_is_net_error "$code" && network_hint
     exit 1
   fi
   crumb="$(python3 -c 'import json,sys
@@ -187,8 +189,79 @@ _api_note() {
   printf '%s' "${API_HTTP_CODE:-}" > "$API_STATUS_FILE"
 }
 
+# 当前 Wi-Fi 名称（macOS）。测试可用 MOCK_WIFI_NAME 覆盖；探测失败输出空。
+current_wifi() {
+  if [ -n "${MOCK_WIFI_NAME:-}" ]; then
+    printf '%s' "$MOCK_WIFI_NAME"
+    return 0
+  fi
+  local dev line name="" iface=""
+  # 先找 Wi-Fi 接口名，再查一次 SSID，避免逐个接口轮询拖慢失败路径
+  line="$(networksetup -listallhardwareports 2>/dev/null || true)"
+  iface="$(printf '%s' "$line" | awk '/Wi-Fi/{getline; print; exit}')"
+  if [ -z "$iface" ]; then
+    for dev in en0 en1 en2 en3 en4 en5 en6 en7; do
+      line="$(networksetup -getairportnetwork "$dev" 2>/dev/null || true)"
+      name="$(printf '%s' "$line" | sed -nE 's/^Current Wi-Fi Network: (.*)$/\1/p')"
+      [ -n "$name" ] && { printf '%s' "$name"; return 0; }
+    done
+    return 1
+  fi
+  iface="$(printf '%s' "$iface" | awk '{print $NF}')"
+  line="$(networksetup -getairportnetwork "$iface" 2>/dev/null || true)"
+  name="$(printf '%s' "$line" | sed -nE 's/^Current Wi-Fi Network: (.*)$/\1/p')"
+  if [ -n "$name" ]; then
+    printf '%s' "$name"
+    return 0
+  fi
+  return 1
+}
+
+# 允许网络名单：优先 $JENKINS_ALLOWED_NETWORK（逗号分隔），其次 env/network 的 ALLOWED_NETWORKS=。
+load_network_allowed() {
+  local file="" val=""
+  if [ -n "${JENKINS_ALLOWED_NETWORK:-}" ]; then
+    printf '%s' "$JENKINS_ALLOWED_NETWORK"
+    return 0
+  fi
+  file="${NETWORK_FILE:-$STATE_DIR/env/network}"
+  if [ -r "$file" ]; then
+    val="$(sed -nE 's/^ALLOWED_NETWORKS[[:space:]]*=[[:space:]]*(.*)$/\1/p' "$file" | tail -n 1)"
+    printf '%s' "$val"
+    return 0
+  fi
+  return 1
+}
+
+# 网络类失败（连不上、超时、网关类 502/503/504）时的提醒：
+# 检测到当前 Wi-Fi 且配置了允许网络时，不在允许名单就点名提醒；否则给通用 M 网络提示。
+network_hint() {
+  local ssid="" allowed="" cfg="" hit=0 n
+  cfg="$(load_network_allowed || true)"
+  cfg="$(printf '%s' "$cfg" | tr ',' ' ')"
+  ssid="$(current_wifi || true)"
+  if [ -n "$cfg" ] && [ -n "$ssid" ]; then
+    for n in $cfg; do
+      [ "$n" != "$ssid" ] || hit=1
+    done
+    if [ "$hit" -eq 0 ]; then
+      echo "提示：当前 Wi-Fi 是「${ssid}」，不在允许的网络（${cfg}）里。Jenkins 只在公司 M 网络可达，请切换到 M 网络后重试。" >&2
+      return 0
+    fi
+  fi
+  echo "提示：如果当前不在公司 M 网络，Jenkins 可能无法访问。请切换到 M 网络（公司内网）后重试。" >&2
+}
+
 _load_api_status() {
   API_HTTP_CODE="$(cat "$API_STATUS_FILE" 2>/dev/null || true)"
+}
+
+# 网关/服务不可达类状态码，提示网络问题（4xx 是凭据/业务问题，不提示）
+http_is_net_error() {
+  case "$1" in
+    000|502|503|504) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 api_get() {
@@ -203,6 +276,7 @@ api_get() {
     if [ "$quiet" != "quiet" ]; then
       echo "错误：无法连接 Jenkins" >&2
     fi
+    network_hint
     return 1
   }
   API_HTTP_CODE="$code"
@@ -212,6 +286,7 @@ api_get() {
     if [ "$quiet" != "quiet" ]; then
       echo "错误：请求失败 HTTP ${code} ($1)" >&2
     fi
+    http_is_net_error "$code" && network_hint
     return 1
   fi
   cat "$hf"
@@ -233,6 +308,7 @@ EOF
     "$JENKINS_BASE/job/${path}/buildWithParameters" "${args[@]}" -o /dev/null -D "$hf" -w '%{http_code}')" || {
     rm -f "$hf"
     echo "错误：触发请求未得到响应，结果不确定。先检查队列和构建状态，不要直接重试" >&2
+    network_hint
     exit 1
   }
   loc="$(grep -i '^location:' "$hf" | head -n 1 | sed 's/^[Ll]ocation: //' | tr -d '\r' || true)"
@@ -271,6 +347,7 @@ print((d.get("executable") or {}).get("number") or "")' || true)"
       ;;
     *)
       echo "触发请求返回 HTTP ${code}，结果可能不确定。先检查队列和构建状态，不要直接重试" >&2
+      http_is_net_error "$code" && network_hint
       exit 1
       ;;
   esac
@@ -1182,6 +1259,7 @@ if not ok:
   code="$(curl -sS -g -m 30 -b "$COOKIE_JAR" -u "$AUTH" -H "Jenkins-Crumb: ${crumb}" -X POST \
     "$JENKINS_BASE/queue/cancelItem?id=${path}" -o /dev/null -w '%{http_code}')" || {
     echo "错误：无法连接 Jenkins" >&2
+    network_hint
     exit 1
   }
   case "$code" in

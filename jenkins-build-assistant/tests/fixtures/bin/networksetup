@@ -1,0 +1,19 @@
+#!/bin/bash
+# Offline networksetup stub. MOCK_WIFI_NAME controls the reported SSID;
+# empty (unset) simulates no Wi-Fi / probe failure.
+set -euo pipefail
+if [ "${1:-}" = "-listallhardwareports" ]; then
+  echo "Hardware Port: Wi-Fi"
+  echo "Device: en0"
+  echo "Hardware Port: Ethernet"
+  echo "Device: en1"
+  exit 0
+fi
+if [ "${1:-}" = "-getairportnetwork" ]; then
+  if [ -n "${MOCK_WIFI_NAME:-}" ]; then
+    echo "Current Wi-Fi Network: $MOCK_WIFI_NAME"
+    exit 0
+  fi
+  exit 1
+fi
+exit 1

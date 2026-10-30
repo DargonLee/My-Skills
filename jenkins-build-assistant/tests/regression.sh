@@ -468,6 +468,39 @@ if grep -Fq 'POST /job/v6-Enterprise-2/buildWithParameters' "$MOCK_CALLS_FILE"; 
 fi
 echo "PASS: trigger fails closed when the queue cannot be checked"
 
+# ---- 网络类失败：非公司 M 网络时提醒切换，不让使用者一直不知道为什么失败 ----
+output="$(MOCK_SCENARIO=net_fail bash "$ROOT/scripts/ios.sh" status 2040 2>&1)" || status=$?
+[ "$status" -eq 2 ] || fail "net_fail status should exit 2 (got $status)"
+expect_contains "$output" "无法查询构建状态（HTTP 000）"
+expect_contains "$output" "公司 M 网络"
+echo "PASS: GET transport failure hints to switch to the company M network"
+
+output="$(MOCK_SCENARIO=http503_get bash "$ROOT/scripts/ios.sh" status 2040 2>&1)" || status=$?
+[ "$status" -eq 2 ] || fail "http503_get status should exit 2 (got $status)"
+expect_contains "$output" "无法查询构建状态（HTTP 503）"
+expect_contains "$output" "公司 M 网络"
+echo "PASS: gateway-style 503 failure also hints to the company M network"
+
+output="$(MOCK_SCENARIO=trigger_http_error bash "$ROOT/scripts/ios.sh" trigger 6.10.12 confirm 2>&1)" || status=$?
+[ "$status" -eq 1 ] || fail "trigger 503 should exit 1 (got $status)"
+expect_contains "$output" "HTTP 503"
+expect_contains "$output" "公司 M 网络"
+echo "PASS: trigger 503 failure hints to the company M network"
+
+output="$(MOCK_SCENARIO=net_fail MOCK_WIFI_NAME=HomeWiFi JENKINS_ALLOWED_NETWORK=M bash "$ROOT/scripts/ios.sh" status 2040 2>&1)" || status=$?
+expect_contains "$output" "当前 Wi-Fi 是「HomeWiFi」"
+expect_contains "$output" "不在允许的网络（M）"
+echo "PASS: named non-allowed Wi-Fi gets an explicit M-network warning"
+
+output="$(MOCK_SCENARIO=net_fail MOCK_WIFI_NAME=M JENKINS_ALLOWED_NETWORK=M bash "$ROOT/scripts/ios.sh" status 2040 2>&1)" || status=$?
+expect_contains "$output" "公司 M 网络"
+expect_not_contains "$output" "不在允许的网络"
+echo "PASS: failure on an allowed network still gives the generic M-network hint"
+
+output="$(MOCK_SCENARIO=success bash "$ROOT/scripts/ios.sh" status 2040 2>&1)"
+expect_not_contains "$output" "公司 M 网络"
+echo "PASS: successful path does not emit the M-network hint"
+
 # ---- HarmonyOS: same contract against the harmony Jenkins fixture ----
 export JENKINS_BASE=https://jenkins.ninebot.com
 export MOCK_SCENARIO=success

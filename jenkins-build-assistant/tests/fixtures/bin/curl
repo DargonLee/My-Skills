@@ -40,6 +40,14 @@ if [ "$base" = "https://jenkins.ninebot.com" ]; then
 else
   queued_build=2040
 fi
+# 网络类失败场景（GET）：net_fail=传输失败（exit 7，模拟连不上/超时）；http503_get=服务不可达（网关类 503）
+if [ "$MOCK_SCENARIO" = net_fail ] && [ "$method" = GET ]; then
+  exit 7
+fi
+if [ "$MOCK_SCENARIO" = http503_get ] && [ "$method" = GET ] && [ "$path" != "/crumbIssuer/api/json" ]; then
+  code=503
+  body=''
+fi
 case "$path" in
   /crumbIssuer/api/json)
     body='{"crumb":"fixture-crumb"}' ;;

@@ -103,6 +103,14 @@ terminal-notifier -title "Jenkins 打包助手" -message "点击我" -open "http
 - 需在已登录的图形会话里运行（Terminal / VS Code / Codex 等都算）。SSH、无登录的守护进程里不会显示。
 - 系统设置列表里找不到这两个 App 时，说明还没发过通知，先跑第 1 步再刷新列表。
 
+## 网络前提（公司 M 网络）
+
+两台 Jenkins（`jenkins-ios.ninebot.com`、`jenkins.ninebot.com`）只在公司 M 网络（内网）可达。在家、访客 Wi-Fi 或未连公司网络时，查询和触发都会失败，这不是凭据或参数问题。
+
+- 遇到「无法连接」（连不上/超时）或网关类错误（HTTP 502/503/504）时，脚本会追加提醒：「请切换到公司 M 网络后重试」，能检测到时就带上当前 Wi-Fi 名称。
+- 可选允许名单：在 `env/network` 写 `ALLOWED_NETWORKS=网络名1,网络名2`（或环境变量 `JENKINS_ALLOWED_NETWORK`）。配置后脚本会检测当前 Wi-Fi（macOS），不在名单内时点名提醒「当前 Wi-Fi 是「xxx」，不在允许的网络（…）里」；不配置则给通用提醒。
+- HTTP 401/403/404（凭据/路径问题）不触发网络提醒。
+
 ## 本地回归测试
 
 套件用假凭据、假渠道数据和本地 `curl` stub 检查本地门禁、渠道输出格式和模拟的 Jenkins 响应。运行前它会确认 `curl` 与通知桩是可执行文件且在 `PATH` 最前，`curl` 桩没有联网回退，遇到未处理的请求直接失败。测试把状态目录指向临时目录，不会读写真实凭据和审计日志。手动运行：
