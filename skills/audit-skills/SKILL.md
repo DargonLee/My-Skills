@@ -1,5 +1,5 @@
 ---
-name: skill-health
+name: audit-skills
 description: Audit the skill collection for redundancy, validate frontmatter, and ensure library.json stays synced with actual SKILL.md files.
 ---
 
@@ -88,4 +88,4 @@ After audit, offer to:
 
 ## Usage
 
-Invoke with `/skill-health` to run the audit.
+Invoke with `/audit-skills` to run the audit.

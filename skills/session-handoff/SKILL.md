@@ -1,5 +1,5 @@
 ---
-name: handoff
+name: session-handoff
 description: 长会话结束前写交接文档，或新会话开始时读取交接文档恢复上下文。当用户说「这个会话要结束了」「请写一份交接文档」「写交接文档」「交接一下」「先读 HANDOFF.md」「读 HANDOFF.md」「读一下交接文档」等话时使用。
 ---
 

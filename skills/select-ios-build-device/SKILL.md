@@ -1,5 +1,5 @@
 ---
-name: ios-build-device-selection
+name: select-ios-build-device
 description: Prefer device 00008150-001A69800138401C for xcodebuild. If that device is unavailable, fall back to an available iPhone 17 simulator.
 ---
 

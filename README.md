@@ -1,116 +1,192 @@
 # My-Skills
 
-个人 AI 编码代理技能集合。每个技能是一个目录,内含 `SKILL.md`(结构化系统提示词),供 Claude Code / Codex / ZCode 等代理加载使用。
+个人 AI 编码代理的技能库。每个技能是一个目录，入口是 `SKILL.md`。Claude Code、Codex、豆包工作客户端按目录名加载。
 
-## 仓库结构
+两层：
 
-```
-My-Skills/
-├── <skill>/            # 顶层:日常工作的技能(九号工作流 + 通用工程 + 设计套件)
-├── skills/             # 插件技能集,经 .claude-plugin/marketplace.json 注册(cc-switch 格式)
-├── CLAUDE.md           # 仓库协作约定与命名规范
-└── README.md           # 本文件:技能清单
-```
+- 仓库根目录：日常在用的技能（九号工作流、工程实践、设计套件）。
+- `skills/`：插件集，由 `.claude-plugin/marketplace.json` 注册。其中 5 个未注册，只在本仓库里当工作副本。
 
-> 注意:宿主已安装的技能(`~/.agents/skills/`、项目 `.agents/skills/` 下)是**独立副本**而非软链,本仓库改名不会自动同步到已安装位置。
+已安装到 `~/.agents/skills/`、项目 `.agents/skills/`、`$CODEX_HOME/skills/` 的是独立副本。这里改名不会自动改那些副本，需要重新复制。
 
-## 技能清单
+## 命名
 
-### 一、九号工作流(自研)
+- 目录名等于 `SKILL.md` 里的 `name`，kebab-case，不带 `-skill` 后缀。
+- 动作类用动宾：`write-docs`、`select-ios-build-device`、`implement-minimally`。
+- 同一工具的一组技能把工具名放前面：`jenkins-build-*`、`iphone-use*`、`xcode-mcp*`。
+- 同一件事的不同合同，用名字里的差别分开，不共用一个名字。
+
+下面这些名字是外部程序的查找键，目录名保持不动：
+
+| 名字 | 原因 |
+|------|------|
+| `orca-cli`、`computer-use`、`orchestration` | Orca 用 `orca skills get <name>` 取说明 |
+| `review` | gstack 的 `/review`，并读取 `.claude/skills/review/` 下的清单 |
+| `critique`、`delight`、`normalize`、`optimize`、`frontend-design`、`teach-impeccable` | 设计套件互相用这些短命令调用 |
+| `skill-creator`、`skill-installer` | 上游技能包的发行名 |
+| `caveman`、`tdd`、`grill-me`、`idea-inbox` | 用户直接输入的命令或口头触发词 |
+
+## 同名容易混的时候用哪个
+
+**提交**
 
 | 技能 | 作用 |
 |------|------|
-| `git-commit` | 智能分析工作区变更,自动生成符合规范的中文提交信息并执行提交 |
-| `review-uncommitted` | 审查工作区全部未提交改动(暂存+未暂存+未跟踪),按严重程度输出问题清单与修复建议 |
-| `review-swarm` | 并行只读多代理评审当前 git diff 或指定文件范围:行为回归、安全/隐私、性能可靠性、契约与测试覆盖 |
-| `jenkins-build-assistant` | Jenkins 打包与构建查询:iOS 企业签测试包、鸿蒙 AGC 邀请测试包触发;三平台构建状态/日志/失败原因/产物/蒲公英链接查询 |
-| `jenkins-install-guide` | jenkins-build-assistant 的安装与使用向导(引导安装技能包,不直接调 Jenkins) |
-| `migrate-github-pod` | 把 GitHub 开源 CocoaPods 库私有化到 git.ninebot.com 并用 ninebot-cli 发布到 NBSpecs,或在私仓已有时同步上游新版本 |
-| `xcode-mcp-build` | 通过 Xcode 官方 MCP bridge(xcrun mcpbridge)编译 iOS 项目并取构建日志排障 |
-| `iphone-use` | 通过 PUA(Phone Use Agent)MCP 工具操作真实 iPhone:导航、点击、输入、采集、认证接管 |
-| `iphone-use-setup` | 配置 PUA:在真机上安装、签名、启动手机端执行服务,诊断 USB/Xcode 连接 |
-| `skill-hub-contributor` | 向 app-docs 仓库的 Skill Hub 新增/更新技能:收集 manifest、同步仓库、更新 registry、建提交(确认后才 push) |
+| `git-commit` | 分析已暂存变更，生成 `<type>(<scope>): 中文描述` 并提交。命令 `/git-commit`。 |
+| `git-commit-lint` | 读取本仓库 commitlint（type、scope、长度），生成合规的英文提交信息后直接提交。命令 `/git-commit-lint`。 |
+| `commit-workflow` | 按 Conventional Commits 写多行说明（标题、要点、Co-Authored-By），只暂存这次相关的文件。 |
 
-### 二、通用工程实践
+**审查**
 
 | 技能 | 作用 |
 |------|------|
-| `tdd` | 测试驱动开发:红-绿-重构流程,先写测试再实现 |
-| `minimal-implementation` | 最小实现原则:新功能/API/兼容层/解析器完工前的自查标准 |
-| `review` | 合入前的 PR 评审:对 base 分支 diff 做 SQL 安全、LLM 信任边界、条件副作用等结构性检查 |
-| `grill-me` | 拷问式访谈,打磨计划或设计方案 |
-| `grill-with-docs` | 同 grill-me,并随进程产出 ADR 与术语表 |
-| `improve-codebase-architecture` | 扫描代码库寻找架构深化机会,生成可视化 HTML 报告并逐项拷问 |
-| `build-iphone-apps` | 纯 CLI(不用 Xcode GUI)构建专业原生 iPhone App:Swift/SwiftUI/UIKit 全生命周期 |
-| `react-native-architecture` | 生产级 RN 应用架构:Expo、导航、原生模块、离线同步、跨平台模式 |
-| `write-docs` | 按 Metabase 对话式、清晰、用户导向风格撰写文档(markdown/MDX) |
-| `caveman` | 超压缩交流模式:去虚词寒暄省约 75% token,保留全部技术准确性 |
-| `skill-creator` | 创建/改进技能的指南(结构、描述、触发词设计) |
-| `skill-installer` | 从精选列表或 GitHub 仓库(含私仓)安装 Codex 技能到 $CODEX_HOME/skills |
-| `computer-use` | 通过 `orca computer` 操控本地 App 窗口 GUI:无障碍树、点击、输入、菜单、截图 |
-| `orca-cli` | 通过 `orca` CLI 操作 Orca 管理的 worktree、目录上下文、终端、仓库、自动化、内嵌浏览器 |
-| `orchestration` | 编排 Orca 受管 worker:线程消息、阻塞问答、任务分发、任务 DAG、决策门 |
+| `review-uncommitted` | 只读审查工作区里还没提交的改动（已暂存、未暂存、未跟踪），按严重程度给出问题和改法。 |
+| `review-swarm` | 对当前 diff 或指定文件开四个只读子代理，找行为回归、安全或隐私、性能、契约和测试缺口。不改文件。 |
+| `review` | 合入前对照 base 分支做结构性审查（SQL、LLM 输出信任边界、条件副作用等）。机械问题直接改，其余先问。命令 `/review`。 |
 
-### 三、设计 / UX 套件(Anthropic impeccable 系列)
+**架构**
 
 | 技能 | 作用 |
 |------|------|
-| `critique` | UX 视角设计评审:视觉层级、信息架构、认知负荷,量化打分+画像测试+可执行反馈 |
-| `delight` | 为界面添加愉悦感与个性:打磨、动效、微交互,让功能变得 memorable |
-| `normalize` | 审计并校正 UI 使其回归设计系统:规范、间距、token、模式一致性 |
-| `optimize` | UI 性能诊断与修复:加载、渲染、动画、图片、包体积 |
-| `teach-impeccable` | 一次性初始化:采集项目设计上下文写入 AI 配置,建立持久设计准则 |
-| `frontend-design` | 生成高设计感、避免"AI 千篇一律"外观的生产级前端界面 |
+| `harlan-architecture` | Harlan 做模块、SDK、Bridge、迁移、拆分时的总入口。 |
+| `harlan-architecture-philosophy` | 只有设计偏好、决策方式和输出格式。 |
+| `harlan-rn-architecture` | RN 容器：协议优于继承、不写兼容层、一个类型一件事。 |
+| `design-layered-architecture` | 逻辑漏到错误的层、UI 里写了业务规则时，把数据源、转换、状态、扩展点和渲染拆开。 |
+| `improve-codebase-architecture` | 扫代码库里值得加深的结构点，生成 HTML 报告，再逐项追问。 |
+| `react-native-architecture` | 通用的生产级 React Native：Expo、导航、原生模块、离线同步。 |
+| `vapp-architecture` | 解释 VApp Native Bridge 怎么跑：TurboModule、NotificationCenter、按协议找服务。 |
+| `vapp-method-generator` | 新增或修改一个九号 iOS VApp 方法，并接到 NBVAppManager / NBUnifiedAPIRegistry。 |
 
-### 四、`skills/` 插件技能集
-
-**已注册 marketplace.json(12 个):**
-
-| 技能 | 作用 |
-|------|------|
-| `harlan-architecture` | Harlan 全栈架构设计:通用架构哲学 + iOS/RN 跨平台分层 + SDK 设计偏好三位一体 |
-| `harlan-architecture-philosophy` | Harlan 架构设计哲学:设计偏好、决策风格与输出格式 |
-| `harlan-rn-architecture` | Harlan 的 RN 容器架构偏好:协议优于继承、拒绝兼容性代码、单一职责 |
-| `vapp-architecture` | VApp Native Bridge Runtime 架构文档:TuroModule、NotificationCenter 分发、Protocol-oriented 服务查找 |
-| `web-design-engineer` | 用 HTML/CSS/JS/React 构建高质量视觉 Web 产物:落地页、仪表盘、交互原型、动画演示 |
-| `ios-build-device-selection` | xcodebuild 设备选择偏好(优先指定真机,回退可用模拟器) |
-| `karpathy-guidelines` | LLM 编码行为守则:避免过度复杂化、外科手术式改动、显式假设、可验证完成标准 |
-| `skill-health` | 技能集健康审计:冗余检测、frontmatter 校验、library.json 同步检查 |
-| `xcode-mcp` | 通过 mcpbridge 与 Xcode 交互:列窗口、开文件、编译、以 Xcode 配置启动代理 |
-| `idea-inbox` | 想法收件箱:批量处理 docs/ideas/inbox.md 暂存想法并推进执行 |
-| `commit-workflow` | 规范化 Git 提交流程与完整提交摘要 |
-| `git-commit-lint` | 读取项目 commitlint 规范生成合规提交信息,自动处理 pre-commit 钩子失败 |
-
-**未注册的工作副本(5 个):**
+**界面**
 
 | 技能 | 作用 |
 |------|------|
-| `vapp-method-generator` | 生成/更新九号 iOS VApp 原生方法与服务(Swift VApp API、NBVAppManager/NBUnifiedAPIRegistry 注册接线) |
-| `engineering-layered-design` | 工程分层设计:逻辑漏层、UI 含业务规则等结构问题的设计与重构指导 |
-| `handoff` | 会话交接:长会话结束写交接文档,新会话读取恢复上下文 |
-| `release-version` | 安全发版与提交:npm/SDK 包发版、版本号、tag/dist-tag 管理 |
-| `write-ai-doc` | 为重要特性与关键决策修复创建维护 docs-ai/ 编号记录(000-plan / 001-action) |
+| `frontend-design` | 写有辨识度的生产级前端界面。项目还没有设计上下文时，先走 `teach-impeccable`。 |
+| `teach-impeccable` | 一次性收集项目的设计上下文，写进 AI 配置，供后面的设计技能使用。 |
+| `critique` | 从 UX 看层级、信息架构和认知负担，打分并给出可执行的修改。 |
+| `delight` | 在不挡住主任务的前提下加个性、动效和微交互。 |
+| `normalize` | 把界面拉回现有设计系统：间距、token、组件用法。 |
+| `optimize` | 界面性能：加载、渲染、动画、图片和包体积。 |
+| `web-design-engineer` | 用 HTML/CSS/JS/React 做落地页、仪表盘、可点击原型、幻灯片和动画演示。 |
 
-## 命名规范(2026-10-30 起)
+**打包和真机**
 
-1. 目录名必须与 SKILL.md frontmatter 的 `name` 一致,kebab-case
-2. 不带冗余 `-skill` 后缀
-3. 同用途技能跨层不重名,按特色消歧(如 `git-commit` 中文规范版在顶层,`git-commit-lint` commitlint 版在 skills/)
-4. 动宾语序(`write-docs` 而非 `docs-write`)
+| 技能 | 作用 |
+|------|------|
+| `jenkins-build-assistant` | 调 Jenkins：触发 iOS 企业签测试包和鸿蒙 AGC 邀请测试包；查询 iOS / 鸿蒙 / Android 的状态、日志、失败原因和产物。Android 只查询，不触发。 |
+| `jenkins-build-setup` | 引导把 `jenkins-build-assistant` 装进豆包工作客户端，并说明三平台怎么用。本技能不调用 Jenkins。 |
+| `build-iphone-apps` | 不用 Xcode 图形界面，用命令行完成 Swift / SwiftUI / UIKit App 的搭建、调试、测试和发布。 |
+| `xcode-mcp` | 通过 Xcode 的 mcpbridge 列窗口、打开文件、编译，或按 Xcode 的配置启动代理。 |
+| `xcode-mcp-build` | 只走编译这条路：选设备（优先已连接真机，否则 Any iOS Device arm64）→ Build → 读构建日志。 |
+| `select-ios-build-device` | `xcodebuild` 的目的地：优先设备 `00008150-001A69800138401C`，没有则用一台 iPhone 17 模拟器。 |
+| `iphone-use` | 用 PUA 操作一台真实 iPhone：导航、点击、输入、滚动、采集列表。 |
+| `iphone-use-setup` | 在这台 iPhone 上安装、签名并启动 PUA；处理 USB、Xcode 和签名过期。 |
 
-### 本次改名对照
+**Orca 和会话**
 
-| 旧名 | 新名 | 原因 |
-|------|------|------|
-| `docs-write` | `write-docs` | 动宾语序 |
-| `skills/git-commit` | `skills/git-commit-lint` | 与顶层中文版 git-commit 重名,按 commitlint 特色消歧 |
-| `skills/idea-inbox-skill` | `skills/idea-inbox` | 去冗余后缀(name 原为 `idea`,一并统一) |
-| `skills/vapp-skill` | `skills/vapp-architecture` | 去冗余后缀,表意其架构文档定位 |
-| `xcode-mcp`(顶层) | 删除 | 与 `skills/xcode-mcp` 完全冗余,wrapper 保留新版同步到 skills/ |
-| `skills/review-uncommitted` | 删除 | 6 行占位版,顶层 50 行完整版已覆盖 |
-| `skills/commit-workflow`(name) | `commit` → `commit-workflow` | name 与目录名统一 |
+| 技能 | 作用 |
+|------|------|
+| `orca-cli` | 操作 Orca 管的 worktree、终端、仓库、自动化和内嵌浏览器。把整段工作交给另一个 agent 时用它。 |
+| `orchestration` | 监督多个 Orca worker：线程消息、阻塞问答、任务分发、任务 DAG 和决策门。 |
+| `computer-use` | 操作一个看得见的本机窗口：无障碍树、点击、输入、菜单和截图。命令行、文件或 HTTP 能完成时不用它。 |
+| `session-handoff` | 会话结束时把进度写进 `HANDOFF.md`；新会话读这份笔记接着做。 |
 
-## 使用方式
+## 全部技能
 
-- **Claude Code / marketplace**:`.claude-plugin/marketplace.json` 注册的 `skills/` 插件集,可直接作为插件源添加
-- **手动安装**:把技能目录复制(或软链)到目标代理的技能目录,如 `~/.agents/skills/<name>/`、项目 `.agents/skills/<name>/`、`$CODEX_HOME/skills/<name>/`
+### 九号工作流
+
+| 技能 | 作用 |
+|------|------|
+| `git-commit` | 中文 Conventional Commits，分析变更后直接提交。 |
+| `review-uncommitted` | 只读审查工作区未提交改动。 |
+| `review-swarm` | 四个只读子代理并行审查 diff。 |
+| `jenkins-build-assistant` | 触发和查询 Jenkins 测试包。 |
+| `jenkins-build-setup` | 安装并讲解 Jenkins 打包技能，自己不打包。 |
+| `migrate-github-pod` | 把 GitHub 上的 CocoaPods 库迁到 git.ninebot.com，并用 ninebot-cli 发到 NBSpecs；私仓已有时同步上游新版本。 |
+| `xcode-mcp-build` | 用 Xcode mcpbridge 编译 iOS 工程并看日志。 |
+| `iphone-use` | 操作真实 iPhone。 |
+| `iphone-use-setup` | 把 iPhone 上的 PUA 服务装好并拉到 READY。 |
+| `skill-hub-contributor` | 把本地现成技能入库到 app-docs 的 Skill Hub：更新文档、ZIP 和 registry，先做本地提交，确认后才 push。 |
+
+### 工程实践
+
+| 技能 | 作用 |
+|------|------|
+| `tdd` | 先写失败测试，再写实现，再重构。 |
+| `implement-minimally` | 功能只覆盖当前真实合同；跑通后删掉没用到的分支、包装和 API。完工前用它自查。 |
+| `review` | 合入前的 PR 结构性审查，并修机械问题。 |
+| `grill-me` | 用连续追问把一个计划或设计方案问清楚。 |
+| `grill-with-docs` | 同样的追问，同时把结论写成 ADR 和术语表。 |
+| `improve-codebase-architecture` | 找架构上值得加深的点，出 HTML 报告再逐项追问。 |
+| `build-iphone-apps` | 命令行构建原生 iPhone App 的全流程。 |
+| `react-native-architecture` | 生产级 React Native 的结构和跨平台做法。 |
+| `write-docs` | 用 Metabase 那种对话式、面向使用者的语气写 Markdown / MDX。 |
+| `caveman` | 压缩说法：去掉虚词和客套，技术内容保持原样。说 “caveman mode” 或 `/caveman` 打开，说 “normal mode” 关闭。 |
+| `skill-creator` | 写一个新技能或改一个已有技能时的结构、描述和触发条件。 |
+| `skill-installer` | 从精选列表或 GitHub（含私仓）把技能装进 `$CODEX_HOME/skills`。 |
+| `computer-use` | 操控可见的本机窗口。 |
+| `orca-cli` | 操作 Orca 的 worktree、终端和内嵌浏览器。 |
+| `orchestration` | 编排多个 Orca worker。 |
+
+### 设计
+
+| 技能 | 作用 |
+|------|------|
+| `teach-impeccable` | 把项目设计上下文写入 AI 配置。跑一次。 |
+| `frontend-design` | 做生产级、不像通用 AI 模板的前端界面。 |
+| `critique` | UX 评审：层级、信息架构、认知负担，带分数和修改建议。 |
+| `delight` | 给界面加记得住的动效和个性。 |
+| `normalize` | 把漂掉的界面收回到设计系统。 |
+| `optimize` | 诊断并修界面性能。 |
+
+### `skills/` 插件集
+
+marketplace 已注册：
+
+| 技能 | 作用 |
+|------|------|
+| `harlan-architecture` | Harlan 的全栈架构总入口。 |
+| `harlan-architecture-philosophy` | Harlan 的架构偏好和决策方式。 |
+| `harlan-rn-architecture` | Harlan 的 RN 容器架构偏好。 |
+| `vapp-architecture` | VApp Native Bridge 运行时说明。 |
+| `web-design-engineer` | 高质量视觉 Web 产物（页面、原型、幻灯片、可视化）。 |
+| `select-ios-build-device` | 为 `xcodebuild` 选定真机或 iPhone 17 模拟器。 |
+| `karpathy-guidelines` | 写代码时少做复杂化：先说假设，改动保持手术式，完成标准要能验证。 |
+| `audit-skills` | 检查技能是否重复、frontmatter 是否合法、`library.json` 是否和磁盘一致。命令 `/audit-skills`。 |
+| `xcode-mcp` | 通过 mcpbridge 和 Xcode 交互。 |
+| `idea-inbox` | 任务进行中把临时想法记到 `docs/ideas/inbox.md`；`/idea` 时批量处理并归档。 |
+| `commit-workflow` | Conventional Commits 的多行提交格式和提交前检查。 |
+| `git-commit-lint` | 按项目 commitlint 生成提交信息并提交。 |
+
+未注册，只在本仓库使用：
+
+| 技能 | 作用 |
+|------|------|
+| `vapp-method-generator` | 生成或更新九号 iOS VApp 原生方法，并完成注册接线。 |
+| `design-layered-architecture` | 按层设计或重构：数据从哪来、怎么变换、谁编排、UI 只负责渲染。 |
+| `session-handoff` | 写或读 `HANDOFF.md`，让下一个没有上下文的会话能接着做。 |
+| `release-version` | 发 npm / SDK 包：对版本、跑验证、发布、核对 dist-tag，再只提交发版相关文件。 |
+| `write-ai-doc` | 为有长期决策价值的功能或修复写 `docs-ai/` 编号记录：实现前 `000-plan.md`，实现后 `001-action.md`。 |
+
+## 改名对照
+
+| 旧名 | 新名 |
+|------|------|
+| `docs-write` | `write-docs` |
+| `skills/git-commit` | `skills/git-commit-lint` |
+| `skills/idea-inbox-skill` | `skills/idea-inbox` |
+| `skills/vapp-skill` | `skills/vapp-architecture` |
+| `skills/commit`（仅 frontmatter） | `commit-workflow` |
+| `jenkins-install-guide` | `jenkins-build-setup` |
+| `minimal-implementation` | `implement-minimally` |
+| `skills/handoff` | `skills/session-handoff` |
+| `skills/ios-build-device-selection` | `skills/select-ios-build-device` |
+| `skills/engineering-layered-design` | `skills/design-layered-architecture` |
+| `skills/skill-health` | `skills/audit-skills` |
+
+顶层曾经有一份和 `skills/xcode-mcp` 重复的 `xcode-mcp`，以及 `skills/review-uncommitted` 的 6 行占位，都已删掉。完整版分别留在 `skills/xcode-mcp` 和顶层 `review-uncommitted`。
+
+## 安装
+
+- Claude Code marketplace：把本仓库加为插件源，加载 `marketplace.json` 里的 12 个技能。
+- 手动：把技能目录复制到 `~/.agents/skills/<name>/`、项目 `.agents/skills/<name>/` 或 `$CODEX_HOME/skills/<name>/`。

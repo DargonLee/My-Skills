@@ -1,5 +1,5 @@
 ---
-name: jenkins-install-guide
+name: jenkins-build-setup
 description: 当用户询问「如何安装 Jenkins 打包技能」「怎么用 Jenkins 打包」「帮我安装 Jenkins 打包技能」、或要打测试包、查构建状态、取每日包却不确定技能是否已装时使用。本技能是 jenkins-build-assistant 的安装与使用向导：负责引导用户（豆包工作客户端）下载安装 jenkins-build-assistant 技能包，并说明三平台（iOS / 鸿蒙 / Android）的常用用法。实际打包执行由已安装的 jenkins-build-assistant 技能承担，本技能不直接调 Jenkins。
 ---
 

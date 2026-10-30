@@ -1,0 +1,4 @@
+interface:
+  display_name: "Design Layered Architecture"
+  short_description: "Layered code design and responsibility boundaries"
+  default_prompt: "Use $design-layered-architecture to review this implementation and separate source, transformation, orchestration, extension points, and UI responsibilities."

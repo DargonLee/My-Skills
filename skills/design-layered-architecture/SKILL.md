@@ -1,5 +1,5 @@
 ---
-name: engineering-layered-design
+name: design-layered-architecture
 description: Use when designing, reviewing, or refactoring code architecture and engineering structure, especially when logic is leaking into the wrong layer, UI components contain business rules, orchestration services do data parsing, one bug hints at a reusable abstraction, or a feature needs clear boundaries between data source, transformation, state management, extension points, and rendering. Use for separation of concerns, layered design, parser/adapter/pipeline decisions, reusable contracts, and preventing narrow fixes from becoming hardcoded architecture.
 ---
 

@@ -1,14 +1,14 @@
 ---
 name: git-commit-lint
-description: 智能分析工作区变更，读取项目 commitlint 规范生成合规提交信息并执行提交，自动处理 pre-commit 钩子失败。
+description: 智能分析工作区变更，读取项目 commitlint 规范生成合规提交信息并直接提交。
 disable-model-invocation: true
-allowed-tools: Bash(git *), Bash(npx eslint *), Bash(npx prettier *), Read, Write, Edit
+allowed-tools: Bash(git *), Read, Write
 argument-hint: "[可选：自定义提交信息]"
 ---
 
 # 智能 Git 提交命令说明
 
-自动化执行代码暂存与智能提交。提交信息严格遵循项目自身的 commitlint 配置；若 pre-commit 钩子失败，做最小修复后重试。
+自动化执行代码暂存与智能提交。提交信息严格遵循项目自身的 commitlint 配置，生成后直接 `git commit`。
 
 ## 执行流程
 
@@ -25,7 +25,6 @@ argument-hint: "[可选：自定义提交信息]"
      - `scope-empty` / `scope-enum`：scope 是否必填、是否限定取值。
      - `header-max-length` / `subject-max-length`：长度上限。
    - 若检测不到任何 commitlint 配置，回退到默认规范 `<type>(<scope>): <description>`。
-   - 同时留意是否存在 husky（`.husky/`）、lefthook（`lefthook.yml`）、simple-git-hooks、lint-staged（`package.json` 的 `lint-staged` 字段）等提交钩子。
 
 3. **变更智能分析**
    - 执行 `git diff --cached --stat` 分析变更规模与受影响的模块；必要时用 `git diff --cached -- <path>` 查看具体内容。
@@ -49,17 +48,13 @@ argument-hint: "[可选：自定义提交信息]"
 
 5. **执行提交**
    - 执行 `git commit -m "<message>"`。
-   - **处理 pre-commit 钩子失败**：
-     - 钩子（常见为 lint-staged → eslint/prettier --fix）可能因暂存文件存在 lint 错误而失败并回滚。
-     - 读取钩子报错，对暂存文件做**最小修复**（如修复 ESLint/Prettier 报错），重新 `git add` 后重试 `git commit`。
-     - 注意 lint-staged 的 `--fix` 可能已自动改动暂存内容，需重新 `git add` 暂存被修复的文件。
-     - 若修复会牵出大量与本次提交无关的既有问题，应**停下来向用户确认**，而非无限扩大修复范围。
-     - commit-msg 钩子（commitlint）失败时，按报错调整信息格式/类型/scope 后重试。
+   - 提交命令只执行这一次。pre-commit 失败时不要改代码、不要重新暂存、不要重试。
 
 6. **后置确认**
-   - 输出最终的提交信息与 Commit SHA，确保工作区干净。
+   - 提交成功时输出提交信息与 Commit SHA。
+   - 提交失败时原样报告错误并停止。
 
 ## 使用示例
 
-* `/git-commit` —— 自动分析所有变更并智能提交。
-* `/git-commit "fix(auth): fix user profile memory leak"` —— 使用自定义信息直接提交（仍需通过项目 commitlint 校验）。
+* `/git-commit-lint` —— 自动分析所有变更并智能提交。
+* `/git-commit-lint "fix(auth): fix user profile memory leak"` —— 使用自定义信息直接提交（仍需通过项目 commitlint 校验）。

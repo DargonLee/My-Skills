@@ -1,5 +1,5 @@
 ---
-name: minimal-implementation
+name: implement-minimally
 description: Use when implementing a feature, adding an API or compatibility layer, writing parsers, or finishing newly written code—before calling the work done.
 ---
 
